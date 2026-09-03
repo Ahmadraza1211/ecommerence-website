@@ -1,0 +1,278 @@
+import { Router, Response, NextFunction } from 'express';
+import { body } from 'express-validator';
+import mongoose from 'mongoose';
+import { Cart } from '../models/Cart';
+import { Product } from '../models/Product';
+import { CodRequest } from '../models/CodRequest';
+import { Banner } from '../models/Banner';
+import { authenticate, AuthenticatedRequest, requireBuyer } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { computeEffectivePrice } from '../utils/pricing';
+
+const router = Router();
+router.use(authenticate, requireBuyer);
+
+async function getCartWithItems(userId: string) {
+  const cart = await Cart.findOne({ userId });
+  if (!cart) return null;
+  const enrichedItems: any[] = [];
+  for (const item of cart.items) {
+    const product = await Product.findById(item.productId);
+    const variant = product?.variants.find((v) => v._id?.equals(item.variantId));
+    if (!product || !variant) continue;
+    const { effectivePrice } = computeEffectivePrice({
+      basePrice: variant.priceOverride != null ? variant.priceOverride : product.basePrice,
+      discountType: product.discountType,
+      discountValue: product.discountValue,
+      discountStartAt: product.discountStartAt,
+      discountEndAt: product.discountEndAt,
+    });
+    // PRD_New V3 §Banner Bundle Deal: locked bundle price
+    const unitPrice = item.bundlePrice || effectivePrice;
+    enrichedItems.push({
+      variantId: String(variant._id),
+      productId: String(product._id),
+      title: product.title,
+      slug: product.slug,
+      quantity: item.quantity,
+      priceAtAdd: unitPrice,
+      stockAvailable: variant.stockQuantity,
+      outOfStock: variant.stockQuantity <= 0,
+      image: product.images.find((i) => i.isPrimary)?.url || product.images?.[0]?.url || '',
+      variantLabel: '',
+      isBundleDeal: item.isBundleDeal || false,
+      lockedQuantity: item.isBundleDeal || false,
+    });
+  }
+  const subtotal = enrichedItems.reduce((s, i) => s + i.priceAtAdd * i.quantity, 0);
+  return {
+    _id: cart._id,
+    items: enrichedItems,
+    subtotal,
+    totalItems: enrichedItems.reduce((s, i) => s + i.quantity, 0),
+  };
+}
+
+// GET /cart
+router.get('/', async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const cart = await getCartWithItems(req.user!.id);
+    // PRD_New V3 §Checkout.1: check for pending COD requests (Waiting status)
+    const pendingCod = await CodRequest.find({
+      userId: req.user!.id,
+      status: { $in: ['AWAITING_CONVERSATION', 'PENDING_SELLER_APPROVAL'] },
+    }).sort({ createdAt: -1 });
+    res.json({
+      cart: cart || { items: [], subtotal: 0, totalItems: 0 },
+      pendingCodRequests: pendingCod,
+    });
+  } catch (e) { next(e); }
+});
+
+// GET /cart/validate-stock
+router.get('/validate-stock', async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const cart = await Cart.findOne({ userId: req.user!.id });
+    if (!cart || cart.items.length === 0) {
+      return res.json({ valid: false, reason: 'Your cart is empty', items: [] });
+    }
+    const issues: any[] = [];
+    let hasStockChange = false;
+    for (const item of cart.items) {
+      const product = await Product.findById(item.productId);
+      if (!product) {
+        issues.push({ variantId: String(item.variantId), issue: 'Product no longer exists' });
+        continue;
+      }
+      const variant = product.variants.find((v) => v._id?.equals(item.variantId));
+      if (!variant) {
+        issues.push({ variantId: String(item.variantId), issue: 'Variant no longer exists', productTitle: product.title });
+        continue;
+      }
+      if (variant.stockQuantity <= 0) {
+        issues.push({ variantId: String(item.variantId), issue: 'Out of stock', productTitle: product.title, available: 0 });
+        hasStockChange = true;
+      } else if (variant.stockQuantity < item.quantity) {
+        issues.push({ variantId: String(item.variantId), issue: 'Insufficient stock', productTitle: product.title, available: variant.stockQuantity, requested: item.quantity });
+        hasStockChange = true;
+      }
+    }
+    res.json({
+      valid: issues.length === 0,
+      reason: issues.length === 0 ? '' : 'Some items in your cart are no longer available in the requested quantity',
+      items: issues,
+      hasStockChange,
+    });
+  } catch (e) { next(e); }
+});
+
+// POST /cart/items
+router.post(
+  '/items',
+  [body('variantId').isString(), body('quantity').isInt({ min: 1 })],
+  validate,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const { variantId, quantity } = req.body;
+      const product = await Product.findOne({ 'variants._id': new mongoose.Types.ObjectId(variantId) });
+      if (!product) return res.status(404).json({ error: 'Product not found' });
+      const variant = product.variants.find((v) => v._id?.equals(variantId));
+      if (!variant) return res.status(404).json({ error: 'Variant not found' });
+      if (variant.stockQuantity <= 0) return res.status(400).json({ error: 'This item is out of stock' });
+
+      const pendingCodQty = await totalPendingCodQuantity(variantId);
+      const availableForNewCart = Math.max(0, variant.stockQuantity - pendingCodQty);
+      if (quantity > availableForNewCart) {
+        return res.status(400).json({ error: `Only ${availableForNewCart} available (some units are reserved by pending COD orders)` });
+      }
+
+      let cart = await Cart.findOne({ userId: req.user!.id });
+      if (!cart) {
+        cart = await Cart.create({ userId: req.user!.id, items: [] });
+      }
+      const existing = cart.items.find((i) => i.variantId.toString() === variantId);
+      if (existing) {
+        existing.quantity = Math.min(availableForNewCart, existing.quantity + quantity);
+      } else {
+        cart.items.push({
+          variantId: new mongoose.Types.ObjectId(variantId),
+          productId: product._id,
+          quantity,
+        } as any);
+      }
+      await cart.save();
+      const updated = await getCartWithItems(req.user!.id);
+      res.json({ cart: updated });
+    } catch (e) { next(e); }
+  }
+);
+
+/**
+ * POST /cart/apply-bundle
+ * PRD_New V3 §Banner Bundle Deal: apply a banner bundle deal to the cart.
+ * Quantity is locked to the deal's amount, price is auto-calculated.
+ */
+router.post('/apply-bundle', async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const { bannerId, tierIndex, variantId } = req.body;
+    if (!bannerId || variantId === undefined || tierIndex === undefined) {
+      return res.status(400).json({ error: 'bannerId, tierIndex, and variantId are required' });
+    }
+    const banner = await Banner.findById(bannerId);
+    if (!banner || !banner.isActive) {
+      return res.status(404).json({ error: 'Banner deal not found or inactive' });
+    }
+    // PRD_New V3: expiry check
+    const now = new Date();
+    if (banner.startAt > now || banner.endAt < now) {
+      return res.status(400).json({ error: 'This deal has expired or is not yet active' });
+    }
+
+    const tier = banner.bundleTiers[tierIndex];
+    if (!tier) {
+      return res.status(400).json({ error: 'Invalid deal tier' });
+    }
+
+    const product = await Product.findOne({ 'variants._id': new mongoose.Types.ObjectId(variantId) });
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+    const variant = product.variants.find((v) => v._id?.equals(variantId));
+    if (!variant) return res.status(404).json({ error: 'Variant not found' });
+
+    // PRD_New V3: stock guard — deal unavailable if stock < required qty
+    if (variant.stockQuantity < tier.quantity) {
+      return res.status(400).json({ error: `Not enough stock for this deal — only ${variant.stockQuantity} available, deal requires ${tier.quantity}` });
+    }
+
+    const base = variant.priceOverride != null ? variant.priceOverride : product.basePrice;
+    const bundlePrice = Math.round(base * tier.quantity * (1 - tier.discountPercent / 100));
+
+    let cart = await Cart.findOne({ userId: req.user!.id });
+    if (!cart) {
+      cart = await Cart.create({ userId: req.user!.id, items: [] });
+    }
+
+    // PRD_New V3: one deal per checkout — remove any existing bundle deals
+    cart.items = cart.items.filter((i: any) => !i.isBundleDeal);
+
+    cart.items.push({
+      variantId: new mongoose.Types.ObjectId(variantId),
+      productId: product._id,
+      quantity: tier.quantity,
+      isBundleDeal: true,
+      bundlePrice,
+      bundleBannerId: banner._id,
+    } as any);
+    await cart.save();
+    const updated = await getCartWithItems(req.user!.id);
+    res.json({ cart: updated });
+  } catch (e) { next(e); }
+});
+
+// PATCH /cart/items/:variantId
+router.patch('/items/:variantId', async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const { variantId } = req.params;
+    const { quantity } = req.body;
+    const cart = await Cart.findOne({ userId: req.user!.id });
+    if (!cart) return res.status(404).json({ error: 'Cart not found' });
+    const item = cart.items.find((i) => i.variantId.toString() === variantId);
+    if (!item) return res.status(404).json({ error: 'Item not in cart' });
+    // PRD_New V3: bundle deal items have locked quantity
+    if ((item as any).isBundleDeal) {
+      return res.status(400).json({ error: 'Quantity is locked for bundle deal items' });
+    }
+    if (!quantity || quantity < 1) {
+      return res.status(400).json({ error: 'Quantity must be at least 1' });
+    }
+    const product = await Product.findOne({ 'variants._id': new mongoose.Types.ObjectId(variantId) });
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+    const variant = product.variants.find((v) => v._id?.equals(variantId));
+    if (!variant) return res.status(404).json({ error: 'Variant not found' });
+    const pendingCodQty = await totalPendingCodQuantity(variantId);
+    const available = Math.max(0, variant.stockQuantity - pendingCodQty);
+    if (quantity > available) {
+      return res.status(400).json({ error: `Only ${available} available` });
+    }
+    item.quantity = quantity;
+    await cart.save();
+    const updated = await getCartWithItems(req.user!.id);
+    res.json({ cart: updated });
+  } catch (e) { next(e); }
+});
+
+// DELETE /cart/items/:variantId
+router.delete('/items/:variantId', async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const { variantId } = req.params;
+    const cart = await Cart.findOne({ userId: req.user!.id });
+    if (!cart) return res.status(404).json({ error: 'Cart not found' });
+    cart.items = cart.items.filter((i) => i.variantId.toString() !== variantId);
+    await cart.save();
+    const updated = await getCartWithItems(req.user!.id);
+    res.json({ cart: updated });
+  } catch (e) { next(e); }
+});
+
+// DELETE /cart
+router.delete('/', async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    await Cart.updateOne({ userId: req.user!.id }, { $set: { items: [] } });
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+async function totalPendingCodQuantity(variantId: string): Promise<number> {
+  const requests = await CodRequest.find({
+    status: { $in: ['AWAITING_CONVERSATION', 'PENDING_SELLER_APPROVAL'] },
+    'items.variantId': new mongoose.Types.ObjectId(variantId),
+  });
+  let total = 0;
+  for (const r of requests) {
+    for (const it of r.items) {
+      if (String(it.variantId) === String(variantId)) total += it.quantity;
+    }
+  }
+  return total;
+}
+
+export default router;

@@ -56,8 +56,8 @@ export default function AdminLoginPage() {
     <div className="min-h-screen bg-ink-900 text-white flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <Link href="/" className="flex items-center gap-2 justify-center mb-6">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600 text-white font-bold">S</span>
-          <span className="font-display text-2xl font-extrabold">Shopwave Admin</span>
+          <span className="inline-flex h-10 px-2.5 items-center justify-center rounded-xl bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-700 text-white font-bold tracking-widest text-xs shadow-md">LOGO</span>
+          <span className="font-display text-2xl font-extrabold">Rana Ahmad Textile Admin</span>
         </Link>
         <div className="bg-ink-800 rounded-2xl p-6">
           <div className="flex items-center gap-2 mb-1">
@@ -70,7 +70,7 @@ export default function AdminLoginPage() {
               <label className="label text-ink-300">Email</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-400" />
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input pl-10 bg-ink-700 border-ink-600 text-white" placeholder="admin@shopwave.demo" required />
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input pl-10 bg-ink-700 border-ink-600 text-white" placeholder="admin@ranaahmadtextile.com" required />
               </div>
             </div>
             <div>
@@ -85,7 +85,7 @@ export default function AdminLoginPage() {
             </button>
           </form>
           <p className="text-[11px] text-ink-500 text-center mt-4">
-            Demo admin: <code className="text-ink-300">admin@shopwave.demo</code> / <code className="text-ink-300">admin123</code>
+            Demo admin: <code className="text-ink-300">admin@ranaahmadtextile.com</code> / <code className="text-ink-300">admin123</code>
           </p>
         </div>
       </div>

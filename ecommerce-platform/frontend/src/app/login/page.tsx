@@ -56,8 +56,8 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-amber-50 flex items-center justify-center px-4 py-12">
       <div className="card w-full max-w-md p-8">
         <Link href="/" className="flex items-center gap-2 mb-6">
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white font-bold">S</span>
-          <span className="font-display text-xl font-extrabold">Shopwave</span>
+          <span className="inline-flex h-9 px-2.5 items-center justify-center rounded-xl bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-700 text-white font-bold tracking-widest text-xs shadow-md">LOGO</span>
+          <span className="font-display text-xl font-extrabold">Rana Ahmad Textile</span>
         </Link>
         <h1 className="font-display text-2xl font-bold mb-1">Welcome back</h1>
         <p className="text-sm text-ink-500 mb-6">Sign in to your buyer account to continue shopping.</p>
@@ -88,7 +88,7 @@ export default function LoginPage() {
           <Link href={`/register?redirect=${encodeURIComponent(redirect)}`} className="text-brand-600 hover:text-brand-700 font-semibold">Create one</Link>
         </p>
         <p className="text-[11px] text-ink-400 text-center mt-4">
-          Demo buyer: <code className="text-ink-600">buyer@shopwave.demo</code> / <code className="text-ink-600">buyer123</code>
+          Demo buyer: <code className="text-ink-600">buyer@ranaahmadtextile.com</code> / <code className="text-ink-600">buyer123</code>
         </p>
       </div>
     </div>

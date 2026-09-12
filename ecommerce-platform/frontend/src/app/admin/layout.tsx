@@ -53,8 +53,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className="hidden md:flex w-60 bg-ink-900 text-ink-200 flex-col">
         <div className="px-5 py-4 border-b border-ink-800">
           <Link href="/admin/dashboard" className="flex items-center gap-2">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white text-sm font-bold">S</span>
-            <span className="font-display font-bold text-white">Shopwave Admin</span>
+            <span className="inline-flex h-8 px-2.5 items-center justify-center rounded-lg bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-700 text-white text-[10px] font-bold tracking-widest">LOGO</span>
+            <span className="font-display font-bold text-white">Rana Ahmad Textile Admin</span>
           </Link>
         </div>
         <nav className="flex-1 p-3 space-y-1">
@@ -85,7 +85,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       <div className="md:hidden fixed top-0 inset-x-0 bg-ink-900 text-white p-3 z-30 flex items-center justify-between">
-        <span className="font-display font-bold text-sm">Shopwave Admin</span>
+        <span className="font-display font-bold text-sm">Rana Ahmad Textile Admin</span>
         <select
           onChange={(e) => router.push(e.target.value)}
           className="bg-ink-800 text-white text-xs rounded px-2 py-1"

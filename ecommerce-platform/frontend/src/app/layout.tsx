@@ -8,8 +8,8 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakarta' });
 
 export const metadata: Metadata = {
-  title: 'Shopwave — Single-Seller Marketplace',
-  description: 'A modern e-commerce marketplace experience with COD, WhatsApp confirmation, and full seller controls.',
+  title: 'Rana Ahmad Textile — Single-Seller Marketplace',
+  description: 'A premium textile marketplace experience with COD, WhatsApp confirmation, and full seller controls.',
   metadataBase: new URL('http://localhost:3000'),
 };
 

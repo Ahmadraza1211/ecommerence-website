@@ -23,7 +23,7 @@ export default function RegisterPage() {
     try {
       const data = await apiClient.post<{ user: any; accessToken: string }>('/auth/register', form);
       setAuth(data.user, data.accessToken);
-      toast.success('Welcome to Shopwave!');
+      toast.success('Welcome to Rana Ahmad Textile!');
       router.push(redirect);
     } catch (e: any) {
       toast.error(e.response?.data?.error || 'Registration failed');
@@ -40,11 +40,11 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-amber-50 flex items-center justify-center px-4 py-12">
       <div className="card w-full max-w-md p-8">
         <Link href="/" className="flex items-center gap-2 mb-6">
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white font-bold">S</span>
-          <span className="font-display text-xl font-extrabold">Shopwave</span>
+          <span className="inline-flex h-9 px-2.5 items-center justify-center rounded-xl bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-700 text-white font-bold tracking-widest text-xs shadow-md">LOGO</span>
+          <span className="font-display text-xl font-extrabold">Rana Ahmad Textile</span>
         </Link>
         <h1 className="font-display text-2xl font-bold mb-1">Create your account</h1>
-        <p className="text-sm text-ink-500 mb-6">Join Shopwave to start shopping with COD via WhatsApp.</p>
+        <p className="text-sm text-ink-500 mb-6">Join Rana Ahmad Textile to start shopping with COD via WhatsApp.</p>
 
         <form onSubmit={submit} className="space-y-4">
           <div>

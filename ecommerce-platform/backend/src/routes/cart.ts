@@ -20,14 +20,17 @@ async function getCartWithItems(userId: string) {
     const product = await Product.findById(item.productId);
     const variant = product?.variants.find((v) => v._id?.equals(item.variantId));
     if (!product || !variant) continue;
+    const basePrice = variant.priceOverride != null ? variant.priceOverride : product.basePrice;
     const { effectivePrice } = computeEffectivePrice({
-      basePrice: variant.priceOverride != null ? variant.priceOverride : product.basePrice,
+      basePrice,
       discountType: product.discountType,
       discountValue: product.discountValue,
       discountStartAt: product.discountStartAt,
       discountEndAt: product.discountEndAt,
     });
-    const unitPrice = (item as any).bundlePrice || effectivePrice;
+    // Ensure offer/bundle deals or discounted items retain valid price and do not fallback to 0 subtotal
+    const priceVal = (item as any).bundlePrice ?? (item as any).offerPrice ?? effectivePrice;
+    const unitPrice = priceVal > 0 ? priceVal : (basePrice > 0 ? basePrice : 0);
     enrichedItems.push({
       variantId: String(variant._id),
       productId: String(product._id),

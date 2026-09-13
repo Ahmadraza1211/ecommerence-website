@@ -18,5 +18,5 @@ export const env = {
   SELLER_NAME: process.env.SELLER_NAME || 'Marketplace Store',
   BCRYPT_ROUNDS: parseInt(process.env.BCRYPT_ROUNDS || '10', 10),
   LOGIN_MAX_ATTEMPTS: parseInt(process.env.LOGIN_MAX_ATTEMPTS || '5', 10),
-  LOGIN_LOCK_MINUTES: parseInt(process.env.LOGIN_LOCK_MINUTES || '15', 10),
+  LOGIN_LOCK_MINUTES: parseInt(process.env.LOGIN_LOCK_MINUTES || '3', 10),
 };

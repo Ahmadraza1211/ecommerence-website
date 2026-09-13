@@ -17,11 +17,19 @@ router.post(
     body('name').trim().isLength({ min: 2 }),
     body('email').isEmail().normalizeEmail(),
     body('password').isLength({ min: 6 }),
+    body('phone').custom((value) => {
+      if (!value || !value.trim()) throw new Error('Phone number is required');
+      const cleaned = value.replace(/[-\s]/g, '');
+      if (!/^03\d{9}$/.test(cleaned)) throw new Error('Phone must be 11 digits in format 03XX-XXXXXXX');
+      return true;
+    }),
   ],
   validate,
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       const { name, email, password, phone } = req.body;
+      const cleanedPhone = phone.replace(/[-\s]/g, '');
+      const formattedPhone = `${cleanedPhone.slice(0, 4)}-${cleanedPhone.slice(4)}`;
       const existing = await User.findOne({ email });
       if (existing) {
         return res.status(409).json({ error: 'An account with this email already exists' });
@@ -30,7 +38,7 @@ router.post(
       const user = await User.create({
         name,
         email,
-        phone: phone || '',
+        phone: formattedPhone,
         passwordHash,
         role: 'BUYER',
       });
@@ -176,11 +184,12 @@ router.get('/me', authenticate, async (req: AuthenticatedRequest, res: Response,
 // PATCH /auth/me — update profile
 router.patch('/me', authenticate, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const { name, phone, avatarUrl } = req.body;
+    const { name, phone, avatarUrl, password } = req.body;
     const update: any = {};
     if (name) update.name = name;
     if (phone !== undefined) update.phone = phone;
     if (avatarUrl !== undefined) update.avatarUrl = avatarUrl;
+    if (password) update.passwordHash = await hashPassword(password);
     const user = await User.findByIdAndUpdate(req.user!.id, { $set: update }, { new: true }).select('-passwordHash');
     return res.json({ user });
   } catch (e) { next(e); }

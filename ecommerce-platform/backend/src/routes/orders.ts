@@ -25,7 +25,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response, next: NextFunc
   } catch (e) { next(e); }
 });
 
-// GET /me/orders
+// GET /me/orders — includes COD requests that are visible (after Conversation Done)
 router.get('/me/list', async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     const orders = await Order.find({ userId: req.user!.id }).sort({ createdAt: -1 });
@@ -37,7 +37,30 @@ router.get('/me/list', async (req: AuthenticatedRequest, res: Response, next: Ne
       });
       return { ...o.toObject(), unreadCount: unread };
     }));
-    res.json({ items: enriched });
+    // V2/V5: Also include visible COD requests (PENDING_SELLER_APPROVAL, ACCEPTED, REJECTED)
+    const { CodRequest } = await import('../models/CodRequest');
+    const codRequests = await CodRequest.find({
+      userId: req.user!.id,
+      status: { $in: ['PENDING_SELLER_APPROVAL', 'ACCEPTED', 'REJECTED'] },
+    }).sort({ createdAt: -1 });
+    const codEntries = codRequests.map((r: any) => ({
+      _id: r._id,
+      isCodRequest: true,
+      status: r.status,
+      items: r.items,
+      total: r.total,
+      subtotal: r.subtotal,
+      discountAmount: r.discountAmount,
+      createdAt: r.createdAt,
+      itemCount: r.items.length,
+      firstItemTitle: r.items[0]?.title || '',
+      unreadCount: 0,
+    }));
+    // Merge and sort by createdAt (newest first)
+    const allItems = [...enriched, ...codEntries].sort((a: any, b: any) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    res.json({ items: allItems });
   } catch (e) { next(e); }
 });
 

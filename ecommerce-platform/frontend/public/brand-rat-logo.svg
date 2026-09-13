@@ -1,0 +1,13 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Rana Ahmad Textile logo">
+  <defs>
+    <linearGradient id="ratBg" x1="12" y1="12" x2="116" y2="116" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F59E0B"/>
+      <stop offset="0.52" stop-color="#FBBF24"/>
+      <stop offset="1" stop-color="#B45309"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#ratBg)"/>
+  <path d="M34 38h13.5c11.4 0 18.1 6.2 18.1 15.9 0 9.7-6.7 15.9-18.1 15.9H41V90H34V38Zm7 30.4h6.6c6.9 0 11.1-3.1 11.1-8.4 0-5.3-4.2-8.5-11.1-8.5H41v16.9Z" fill="white"/>
+  <path d="M74 34h14.3L59.8 94H45.7L74 34Z" fill="white" opacity="0.94"/>
+  <path d="M84.7 34H96v56H84.7V34Z" fill="white" opacity="0.94"/>
+</svg>

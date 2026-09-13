@@ -63,13 +63,18 @@ export default function CheckoutPage() {
   });
 
   const codMut = useMutation({
-    mutationFn: () => apiClient.post('/cod-requests', { addressId: selectedAddressId }),
+    mutationFn: async () => {
+      const res = await apiClient.post('/cod-requests', { addressId: selectedAddressId });
+      // V5: Clear the cart after placing COD — items should NOT remain in cart
+      await apiClient.delete('/cart');
+      return res;
+    },
     onSuccess: (data) => {
       setCodRequest(data.codRequest);
       setWaLink(data.waLink);
       setStage('cod-flow');
-      // PRD_New §Cart.1: clear the cart after checkout (items moved into the COD flow)
       qc.invalidateQueries({ queryKey: ['cart'] });
+      toast.success('COD request placed — cart cleared');
     },
     onError: (e: any) => toast.error(e.response?.data?.error || 'Failed to start COD flow'),
   });
@@ -87,6 +92,58 @@ export default function CheckoutPage() {
 
   if (!user) return null;
   if (!cartData) return <div className="container-x py-6"><Skeleton className="h-40 w-full" /></div>;
+
+  if (stage === 'cod-flow' && codRequest) {
+    return (
+      <div className="container-x py-8 max-w-xl mx-auto">
+        <div className="card p-6 space-y-6">
+          <div className="text-center">
+            <span className="inline-flex p-3 rounded-full bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 mb-2">
+              <MessageCircle className="h-8 w-8" />
+            </span>
+            <h1 className="font-display text-2xl font-extrabold text-ink-900 dark:text-slate-100">Complete Your Order on WhatsApp</h1>
+            <p className="text-xs text-ink-500 dark:text-slate-400 mt-1">Request ID: #{String(codRequest._id).slice(-6).toUpperCase()}</p>
+          </div>
+
+          <div className="space-y-4">
+            {/* Step 1 */}
+            <div className="p-4 rounded-2xl border-2 border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20 flex items-start gap-3">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-600 text-white text-xs font-bold">1</span>
+              <div className="flex-1">
+                <p className="font-bold text-sm text-green-950 dark:text-green-200">Send Pre-filled Order to Seller</p>
+                <p className="text-xs text-green-800 dark:text-green-300 mt-0.5 mb-3">Click below to open WhatsApp with your full order & shipping details pre-filled.</p>
+                <a
+                  href={waLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary bg-green-600 hover:bg-green-700 text-white text-xs px-4 py-2 inline-flex items-center gap-2 shadow-md"
+                >
+                  <MessageCircle className="h-4 w-4" /> Open WhatsApp Chat
+                </a>
+              </div>
+            </div>
+
+            {/* Step 2 */}
+            <div className="p-4 rounded-2xl border-2 border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 flex items-start gap-3">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-600 text-white text-xs font-bold">2</span>
+              <div className="flex-1">
+                <p className="font-bold text-sm text-amber-950 dark:text-amber-200">Confirm Conversation Done</p>
+                <p className="text-xs text-amber-800 dark:text-amber-300 mt-0.5 mb-3">After messaging on WhatsApp, click below to notify the seller and submit your COD request for approval.</p>
+                <button
+                  onClick={() => conversationDoneMut.mutate()}
+                  disabled={conversationDoneMut.isPending}
+                  className="btn-primary bg-amber-600 hover:bg-amber-700 text-white text-xs px-4 py-2 inline-flex items-center gap-2 shadow-md"
+                >
+                  <Check className="h-4 w-4" /> Conversation Done (Submit Order)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!cart?.items?.length && stage === 'select') {
     return (
       <div className="container-x py-6">
@@ -104,24 +161,44 @@ export default function CheckoutPage() {
           {/* PRD_New §Checkout.4: "Confirm on WhatsApp" moved to the TOP */}
           {stage === 'cod-flow' && codRequest && (
             <div className="card p-5 border-2 border-green-200 bg-green-50/50">
-              <h2 className="font-display font-bold text-lg mb-1 flex items-center gap-2">
-                <MessageCircle className="h-5 w-5 text-green-600" /> Confirm on WhatsApp
+              <h2 className="font-display font-bold text-lg mb-4 flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-green-600" /> COD Confirmation Steps
               </h2>
-              <p className="text-sm text-ink-700 mb-4">
-                Your request <strong>#{shortId(codRequest._id)}</strong> has been created with status{' '}
-                <span className="badge-amber">Awaiting WhatsApp confirmation</span>.
-                Click below to open WhatsApp with your order pre-filled. After you talk to the seller, come back and click &quot;Conversation Done.&quot;
-              </p>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <a href={waLink} target="_blank" rel="noopener noreferrer" className="btn-secondary flex-1">
-                  <MessageCircle className="h-4 w-4" /> Open WhatsApp
-                </a>
-                <button onClick={() => conversationDoneMut.mutate()} disabled={conversationDoneMut.isPending} className="btn-primary flex-1">
-                  <Check className="h-4 w-4" /> Conversation Done
-                </button>
+              {/* V5: Step-by-step UI */}
+              <div className="space-y-4">
+                {/* Step 1 */}
+                <div className="flex gap-3 items-start">
+                  <div className="h-8 w-8 rounded-full bg-amber-600 text-white flex items-center justify-center font-bold text-sm shrink-0">1</div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm">Open WhatsApp</p>
+                    <p className="text-xs text-ink-500 mt-0.5">Click the button below to open WhatsApp with your order details pre-filled.</p>
+                    <a href={waLink} target="_blank" rel="noopener noreferrer" className="btn-secondary text-sm mt-2 inline-flex">
+                      <MessageCircle className="h-4 w-4" /> Open WhatsApp
+                    </a>
+                  </div>
+                </div>
+                {/* Step 2 */}
+                <div className="flex gap-3 items-start">
+                  <div className="h-8 w-8 rounded-full bg-amber-600 text-white flex items-center justify-center font-bold text-sm shrink-0">2</div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm">Talk to the Seller</p>
+                    <p className="text-xs text-ink-500 mt-0.5">Confirm your order details (items, quantity, address) with the seller on WhatsApp.</p>
+                  </div>
+                </div>
+                {/* Step 3 */}
+                <div className="flex gap-3 items-start">
+                  <div className="h-8 w-8 rounded-full bg-amber-600 text-white flex items-center justify-center font-bold text-sm shrink-0">3</div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm">Come Back & Click "Conversation Done"</p>
+                    <p className="text-xs text-ink-500 mt-0.5">Once you've finished the conversation, click below to notify the seller.</p>
+                    <button onClick={() => conversationDoneMut.mutate()} disabled={conversationDoneMut.isPending} className="btn-primary text-sm mt-2">
+                      <Check className="h-4 w-4" /> Conversation Done
+                    </button>
+                  </div>
+                </div>
               </div>
-              <p className="text-[11px] text-ink-500 mt-3">
-                Note: Stock is only reserved once the seller accepts your request. If the item sells out before acceptance, you will be notified.
+              <p className="text-[11px] text-ink-500 mt-4 pt-3 border-t border-ink-100">
+                Request #{shortId(codRequest._id)} — Stock is reserved once the seller accepts. If sold out, you'll be notified.
               </p>
             </div>
           )}

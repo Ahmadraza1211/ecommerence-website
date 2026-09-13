@@ -39,12 +39,16 @@ router.post('/', upload.single('image'), async (req, res: Response, next: NextFu
     const file = req.file as Express.Multer.File | undefined;
     const existing = (await Category.find({}).select('slug')).map((c) => c.slug);
     const slug = uniqueSlug(name, existing);
+    // V3: Auto sort numbering — new categories auto-assign maxSort+1 (scoped to parent)
+    const sortFilter = parentCategoryId ? { parentCategoryId } : { parentCategoryId: null };
+    const maxSortDoc = await Category.findOne(sortFilter).sort({ sortOrder: -1 }).select('sortOrder');
+    const autoSortOrder = maxSortDoc ? maxSortDoc.sortOrder + 1 : 1;
     const category = await Category.create({
       name,
       slug,
       parentCategoryId: parentCategoryId || null,
       imageUrl: file ? (file as any).path : undefined,
-      sortOrder: Number(sortOrder) || 0,
+      sortOrder: Number(sortOrder) || autoSortOrder,
       isActive: isActive !== false,
     });
     res.status(201).json({ category });
@@ -77,14 +81,46 @@ router.patch('/:id', upload.single('image'), async (req, res: Response, next: Ne
 // DELETE /admin/categories/:id
 router.delete('/:id', async (req, res: Response, next: NextFunction) => {
   try {
-    // Prevent deletion if products reference this category
-    const productCount = await Product.countDocuments({ categoryId: req.params.id });
-    if (productCount > 0) {
-      return res.status(400).json({ error: `Cannot delete — ${productCount} product(s) are still in this category. Move them first.` });
+    // V5: Unlink products from this category instead of blocking deletion
+    await Product.updateMany({ categoryId: req.params.id }, { $unset: { categoryId: 1 } });
+    // Also delete any subcategories (and unlink their products too)
+    const subCats = await Category.find({ parentCategoryId: req.params.id }).select('_id');
+    const subIds = subCats.map((s) => s._id);
+    if (subIds.length > 0) {
+      await Product.updateMany({ categoryId: { $in: subIds } }, { $unset: { categoryId: 1 } });
     }
-    // Also delete any subcategories
     await Category.deleteMany({ parentCategoryId: req.params.id });
     await Category.findByIdAndDelete(req.params.id);
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+// PATCH /admin/categories/:id/reorder — swap sortOrder with adjacent item
+router.patch('/:id/reorder', async (req, res: Response, next: NextFunction) => {
+  try {
+    const { direction } = req.body; // 'up' or 'down'
+    const cat = await Category.findById(req.params.id);
+    if (!cat) return res.status(404).json({ error: 'Category not found' });
+    const sortFilter = cat.parentCategoryId
+      ? { parentCategoryId: cat.parentCategoryId }
+      : { parentCategoryId: null };
+    const siblings = await Category.find(sortFilter).sort({ sortOrder: 1 });
+    const idx = siblings.findIndex((s) => String(s._id) === String(cat._id));
+    if (direction === 'up' && idx > 0) {
+      const swap = siblings[idx - 1];
+      const tmp = cat.sortOrder;
+      cat.sortOrder = swap.sortOrder;
+      swap.sortOrder = tmp;
+      await cat.save();
+      await swap.save();
+    } else if (direction === 'down' && idx < siblings.length - 1) {
+      const swap = siblings[idx + 1];
+      const tmp = cat.sortOrder;
+      cat.sortOrder = swap.sortOrder;
+      swap.sortOrder = tmp;
+      await cat.save();
+      await swap.save();
+    }
     res.json({ ok: true });
   } catch (e) { next(e); }
 });

@@ -2,18 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { X, Bell, Star, Check } from 'lucide-react';
+import { X, Bell, Star, Check, ChevronRight } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import { useAuthStore } from '@/lib/authStore';
 import { timeAgo } from '@/lib/utils';
 import { ReviewForm } from './ReviewForm';
 
 /**
- * PRD_New V3 §Chronological Ordering.1: newest notification first.
+ * V7/V8: Notification popup — grouped by Order ID into cards.
+ * Multiple activities on the same order are grouped into one card.
+ * No raw chronological stream text.
  */
 export function NotificationPopup() {
   const user = useAuthStore((s) => s.user);
-  const [currentIdx, setCurrentIdx] = useState(0);
   const [dismissed, setDismissed] = useState<string[]>([]);
   const [reviewOpen, setReviewOpen] = useState<string | null>(null);
   const qc = useQueryClient();
@@ -25,59 +26,88 @@ export function NotificationPopup() {
     refetchInterval: 30000,
   });
 
-  // PRD_New V3: sort newest first
-  const sortedItems = (data?.items || [])
-    .slice()
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .filter((n) => !dismissed.includes(n._id));
-  const current = sortedItems[currentIdx];
+  // Group notifications by orderId
+  const grouped = (data?.items || [])
+    .filter((n: any) => !dismissed.includes(n._id))
+    .reduce((acc: any[], n: any) => {
+      const key = n.orderId ? String(n.orderId) : `no-order-${n._id}`;
+      const existing = acc.find((g) => g.key === key);
+      if (existing) {
+        existing.notifications.push(n);
+      } else {
+        acc.push({ key, orderId: n.orderId, notifications: [n] });
+      }
+      return acc;
+    }, []);
 
-  async function dismiss(id: string) {
-    try {
-      await apiClient.patch(`/notifications/${id}/read`);
-      setDismissed((d) => [...d, id]);
-      setCurrentIdx(0);
-      qc.invalidateQueries({ queryKey: ['notifications'] });
-    } catch {}
+  async function dismissGroup(group: any) {
+    for (const n of group.notifications) {
+      try { await apiClient.patch(`/notifications/${n._id}/read`); } catch {}
+      setDismissed((d) => [...d, n._id]);
+    }
+    qc.invalidateQueries({ queryKey: ['notifications'] });
   }
 
-  if (!user || !current) return null;
+  async function dismissOne(id: string) {
+    try { await apiClient.patch(`/notifications/${id}/read`); } catch {}
+    setDismissed((d) => [...d, id]);
+    qc.invalidateQueries({ queryKey: ['notifications'] });
+  }
 
-  const isDelivered = current.type === 'ORDER_DELIVERED';
+  if (!user || grouped.length === 0) return null;
+
+  const currentGroup = grouped[0];
+
+  // Check if any notification in this group is ORDER_DELIVERED
+  const hasDelivered = currentGroup.notifications.some((n: any) => n.type === 'ORDER_DELIVERED');
+  const deliveredNotif = currentGroup.notifications.find((n: any) => n.type === 'ORDER_DELIVERED');
 
   return (
     <>
-      {reviewOpen && (
-        <ReviewForm orderId={reviewOpen} onClose={() => { setReviewOpen(null); dismiss(current._id); }} />
+      {reviewOpen && deliveredNotif && (
+        <ReviewForm orderId={reviewOpen} onClose={() => { setReviewOpen(null); dismissGroup(currentGroup); }} />
       )}
       <div className="fixed top-20 right-4 z-50 max-w-sm w-[calc(100%-2rem)] sm:w-96 card overflow-hidden animate-slide-up">
-        <div className="bg-gradient-to-r from-brand-600 to-brand-500 text-white p-4 flex items-start gap-3">
+        <div className="bg-gradient-to-r from-amber-600 to-amber-500 text-white p-4 flex items-start gap-3">
           <Bell className="h-5 w-5 mt-0.5 shrink-0" />
           <div className="flex-1">
-            <p className="font-semibold text-sm">{current.title}</p>
-            <p className="text-xs text-brand-100 mt-0.5">{timeAgo(current.createdAt)}</p>
+            <p className="font-semibold text-sm">Activity Update</p>
+            {currentGroup.orderId && (
+              <p className="text-xs text-amber-100 mt-0.5">Order #{String(currentGroup.orderId).slice(-6).toUpperCase()}</p>
+            )}
           </div>
-          <button onClick={() => dismiss(current._id)} className="text-white/80 hover:text-white">
+          <button onClick={() => dismissGroup(currentGroup)} className="text-white/80 hover:text-white">
             <X className="h-4 w-4" />
           </button>
         </div>
         <div className="p-4">
-          <p className="text-sm text-ink-700">{current.body}</p>
-          {isDelivered && (
+          {/* Grouped notification entries */}
+          <div className="space-y-2">
+            {currentGroup.notifications.map((n: any) => (
+              <div key={n._id} className="flex items-start gap-2 text-sm">
+                <span className="text-amber-600 mt-0.5">•</span>
+                <div className="flex-1">
+                  <p className="text-ink-700 dark:text-slate-200">{n.title}</p>
+                  <p className="text-xs text-ink-400">{timeAgo(n.createdAt)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          {hasDelivered && (
             <div className="mt-4 flex gap-2">
-              <button onClick={() => setReviewOpen(current.orderId)} className="btn-primary text-xs px-3 py-2 flex-1">
+              <button onClick={() => setReviewOpen(currentGroup.orderId)} className="btn-primary text-xs px-3 py-2 flex-1">
                 <Star className="h-3.5 w-3.5" /> Leave a review
               </button>
-              <button onClick={() => dismiss(current._id)} className="btn-outline text-xs px-3 py-2">
+              <button onClick={() => dismissGroup(currentGroup)} className="btn-outline text-xs px-3 py-2">
                 <Check className="h-3.5 w-3.5" /> Later
               </button>
             </div>
           )}
-          {!isDelivered && (
-            <button onClick={() => dismiss(current._id)} className="btn-outline text-xs px-3 py-2 w-full mt-4">Dismiss</button>
+          {!hasDelivered && (
+            <button onClick={() => dismissGroup(currentGroup)} className="btn-outline text-xs px-3 py-2 w-full mt-4">Dismiss</button>
           )}
-          {sortedItems.length > 1 && (
-            <p className="text-[10px] text-ink-500 mt-3 text-center">{currentIdx + 1} of {sortedItems.length} unread</p>
+          {grouped.length > 1 && (
+            <p className="text-[10px] text-ink-500 mt-3 text-center">{grouped.length} groups</p>
           )}
         </div>
       </div>

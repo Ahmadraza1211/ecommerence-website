@@ -86,38 +86,42 @@ export default function ProductForm({ productId }: { productId?: string }) {
       setCustomFields(p.customFields || []);
 
       // Robust variant reconstruction on edit load
-      if (p.variants && p.variants.length > 0 && p.attributeValues && p.attributeValues.length > 0) {
+      if (p.variants && p.variants.length > 0) {
         const colorAttr = p.attributes?.find((a: any) => a.name?.toLowerCase() === 'color');
-        const colorAVs = p.attributeValues.filter((av: any) =>
-          av.value && av.value.toLowerCase() !== 'default' &&
-          (av.displayMeta || (colorAttr && String(av.attributeId) === String(colorAttr._id)))
-        );
+        const sizeAttr = p.attributes?.find((a: any) => a.name?.toLowerCase() === 'size');
+
+        const colorAVs = p.attributeValues?.filter((av: any) =>
+          colorAttr ? String(av.attributeId) === String(colorAttr._id) : !!av.displayMeta
+        ) || [];
 
         if (colorAVs.length > 0) {
           const rows: VariantRow[] = colorAVs.map((colorAv: any) => {
             const colorVariants = p.variants.filter((v: any) =>
-              v.attributeValues.some((avId: any) => String(avId._id || avId) === String(colorAv._id))
+              v.attributeValues?.some((avId: any) => String(avId._id || avId) === String(colorAv._id))
             );
 
             const sizeEntries: { size: string; stock: number; price: number | null }[] = [];
 
             colorVariants.forEach((v: any) => {
-              const sizeAV = p.attributeValues.find((av: any) =>
+              const sizeAV = p.attributeValues?.find((av: any) =>
                 String(av._id) !== String(colorAv._id) &&
-                v.attributeValues.some((avId: any) => String(avId._id || avId) === String(av._id))
+                (sizeAttr ? String(av.attributeId) === String(sizeAttr._id) : av.value?.toLowerCase() !== 'default') &&
+                v.attributeValues?.some((avId: any) => String(avId._id || avId) === String(av._id))
               );
-              if (sizeAV && sizeAV.value && sizeAV.value.toLowerCase() !== 'default') {
+              if (sizeAV && sizeAV.value) {
                 sizeEntries.push({
                   size: sizeAV.value,
-                  stock: v.stockQuantity || 0,
+                  stock: v.stockQuantity ?? 0,
                   price: v.priceOverride ?? null,
                 });
               }
             });
 
-            if (sizeEntries.length === 0) {
-              PRESET_SIZES.forEach((s) => {
-                sizeEntries.push({ size: s, stock: colorVariants[0]?.stockQuantity || 0, price: colorVariants[0]?.priceOverride ?? null });
+            if (sizeEntries.length === 0 && colorVariants.length > 0) {
+              sizeEntries.push({
+                size: 'Standard',
+                stock: colorVariants[0].stockQuantity ?? 0,
+                price: colorVariants[0].priceOverride ?? null,
               });
             }
 
@@ -128,6 +132,34 @@ export default function ProductForm({ productId }: { productId?: string }) {
             };
           });
           setVariantRows(rows);
+        } else if (p.attributeValues && p.attributeValues.length > 0) {
+          const sizeAVs = p.attributeValues.filter((av: any) =>
+            sizeAttr ? String(av.attributeId) === String(sizeAttr._id) : av.value?.toLowerCase() !== 'default'
+          );
+
+          if (sizeAVs.length > 0) {
+            const sizeEntries: { size: string; stock: number; price: number | null }[] = [];
+            sizeAVs.forEach((sizeAv: any) => {
+              const matchingVar = p.variants.find((v: any) =>
+                v.attributeValues?.some((avId: any) => String(avId._id || avId) === String(sizeAv._id))
+              );
+              if (matchingVar) {
+                sizeEntries.push({
+                  size: sizeAv.value,
+                  stock: matchingVar.stockQuantity ?? 0,
+                  price: matchingVar.priceOverride ?? null,
+                });
+              }
+            });
+
+            if (sizeEntries.length > 0) {
+              setVariantRows([{
+                color: 'Default',
+                colorHex: '#000000',
+                sizes: sizeEntries,
+              }]);
+            }
+          }
         }
       }
     }
@@ -156,24 +188,41 @@ export default function ProductForm({ productId }: { productId?: string }) {
         const colorAttrId = `color_${Date.now()}`;
         attributes.push({ _id: colorAttrId, name: 'Color', isGlobal: true });
         const sizeAttrId = `size_${Date.now()}`;
-        const allSizes = variantRows[0]?.sizes.map(s => s.size) || [];
-        if (allSizes.length > 0) attributes.push({ _id: sizeAttrId, name: 'Size', isGlobal: true });
+        attributes.push({ _id: sizeAttrId, name: 'Size', isGlobal: true });
+
+        const sizeValueMap = new Map<string, string>();
+
+        variantRows.forEach((row) => {
+          row.sizes.forEach((sizeEntry) => {
+            if (!sizeValueMap.has(sizeEntry.size)) {
+              const sValId = `size_val_${sizeValueMap.size}_${Date.now()}`;
+              sizeValueMap.set(sizeEntry.size, sValId);
+              attributeValues.push({
+                _id: sValId,
+                attributeId: sizeAttrId,
+                value: sizeEntry.size,
+                displayMeta: null,
+              });
+            }
+          });
+        });
 
         variantRows.forEach((row, rowIdx) => {
           const colorValueId = `color_val_${rowIdx}_${Date.now()}`;
-          attributeValues.push({ _id: colorValueId, attributeId: colorAttrId, value: row.color, displayMeta: row.colorHex });
+          attributeValues.push({
+            _id: colorValueId,
+            attributeId: colorAttrId,
+            value: row.color,
+            displayMeta: row.colorHex,
+          });
 
           row.sizes.forEach((sizeEntry, sizeIdx) => {
-            const sizeValueId = `size_val_${sizeIdx}_${Date.now()}`;
-            // Only add size value once
-            if (rowIdx === 0) {
-              attributeValues.push({ _id: sizeValueId, attributeId: sizeAttrId, value: sizeEntry.size, displayMeta: null });
-            }
+            const sizeValId = sizeValueMap.get(sizeEntry.size)!;
             variants.push({
               sku: `${form.title.slice(0, 3).toUpperCase()}-${row.color.slice(0, 3).toUpperCase()}-${sizeEntry.size}-${Date.now()}_${rowIdx}_${sizeIdx}`,
               stockQuantity: Math.max(0, Number(sizeEntry.stock) || 0),
               priceOverride: sizeEntry.price != null ? Number(sizeEntry.price) : null,
-              attributeValues: [colorValueId, sizeValueId],
+              attributeValues: [colorValueId, sizeValId],
             });
           });
         });

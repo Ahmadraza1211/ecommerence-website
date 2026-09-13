@@ -127,10 +127,15 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response, next: NextFu
   } catch (e) { next(e); }
 });
 
-// GET /cod-requests/me — buyer's own requests
+// GET /cod-requests/me — buyer's own requests (only visible after Conversation Done)
 router.get('/me/list', async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const items = await CodRequest.find({ userId: req.user!.id }).sort({ createdAt: -1 });
+    // V5: COD request becomes visible only after the buyer clicks "Conversation Done"
+    // Filter out AWAITING_CONVERSATION status from this list
+    const items = await CodRequest.find({
+      userId: req.user!.id,
+      status: { $ne: 'AWAITING_CONVERSATION' },
+    }).sort({ createdAt: -1 });
     res.json({ items });
   } catch (e) { next(e); }
 });

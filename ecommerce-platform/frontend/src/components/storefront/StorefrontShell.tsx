@@ -10,16 +10,18 @@ import { NotificationPopup } from '@/components/storefront/NotificationPopup';
 import { FloatingFashionIcons } from '@/components/storefront/FloatingFashionIcons';
 import { BackgroundAudioPlayer } from '@/components/storefront/BackgroundAudioPlayer';
 import { useThemeStore } from '@/lib/themeStore';
+import { useAuthStore } from '@/lib/authStore';
 
 export function StorefrontShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith('/admin');
   const isAuth = pathname?.startsWith('/login') || pathname?.startsWith('/register');
   const { isDarkMode } = useThemeStore();
+  const user = useAuthStore((s) => s.user);
 
-  const isMarketplaceOrProduct = 
-    pathname === '/' || 
-    pathname?.startsWith('/products') || 
+  const isMarketplaceOrProduct =
+    pathname === '/' ||
+    pathname?.startsWith('/products') ||
     pathname?.startsWith('/product/');
 
   useEffect(() => {
@@ -36,12 +38,13 @@ export function StorefrontShell({ children }: { children: ReactNode }) {
 
   return (
     <div className={`flex min-h-screen flex-col relative transition-colors duration-300 ${isDarkMode ? 'dark bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
-      {/* Background Image 3 with 13-15% Opacity on Marketplace & Product pages */}
+      {/* Background Image 3 with 2.5% Opacity on Marketplace & Product pages */}
       {isMarketplaceOrProduct && (
-        <div 
-          className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat transition-opacity duration-500 opacity-14 dark:opacity-10"
+        <div
+          className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat transition-opacity duration-500"
           style={{
-            backgroundImage: `url('/uploads/image3.jpg'), url('/images/image3.png'), url('/image3.png')`,
+            backgroundImage: `url('/bg-image3.jpeg')`,
+            opacity: 0.035,
           }}
         />
       )}
@@ -56,7 +59,7 @@ export function StorefrontShell({ children }: { children: ReactNode }) {
         {!isAuth && <Navbar />}
         <main className="flex-1 pb-24 md:pb-0">{children}</main>
         {!isAuth && <Footer />}
-        {!isAuth && <MobileTabBar />}
+        {!isAuth && user?.role !== 'ADMIN' && <MobileTabBar />}
         {!isAuth && <FloatingCartButton />}
         {!isAuth && <NotificationPopup />}
       </div>

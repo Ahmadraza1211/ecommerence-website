@@ -30,7 +30,7 @@ export default function AdminBannersPage() {
           <h1 className="font-display text-2xl font-bold">Banners</h1>
           <p className="text-sm text-ink-500 mt-1">Create banners for your marketplace homepage.</p>
         </div>
-        <button onClick={() => { setEditing(null); setShowForm(true); }} className="btn-primary text-sm"><Plus className="h-4 w-4" /> New Banner</button>
+        {!showForm && <button onClick={() => { setEditing(null); setShowForm(true); }} className="btn-primary text-sm"><Plus className="h-4 w-4" /> New Banner</button>}
       </div>
 
       {showForm && <BannerForm banner={editing} onClose={() => { setShowForm(false); setEditing(null); }} />}
@@ -81,7 +81,8 @@ function BannerForm({ banner, onClose }: { banner: any | null; onClose: () => vo
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string>('');
+  const [editingImage, setEditingImage] = useState<string>(banner?.imageUrl || '');
+  const [removedImage, setRemovedImage] = useState(false);
 
   // PRD_New V4: Clean, simple form with sensible defaults
   const [form, setForm] = useState({
@@ -114,7 +115,7 @@ function BannerForm({ banner, onClose }: { banner: any | null; onClose: () => vo
         throw { response: { data: { error: 'End time must be after the start time' } } };
       }
       const fd = new FormData();
-      fd.append('payload', JSON.stringify({ ...form, bundleTiers: form.bundleTiers }));
+      fd.append('payload', JSON.stringify({ ...form, bundleTiers: form.bundleTiers, removeImage: removedImage }));
       if (file) fd.append('image', file);
       if (banner) return apiClient.upload(`/admin/banners/${banner._id}`, fd, 'patch');
       return apiClient.upload('/admin/banners', fd, 'post');
@@ -131,7 +132,8 @@ function BannerForm({ banner, onClose }: { banner: any | null; onClose: () => vo
   function onFile(f: File | null) {
     if (!f) return;
     setFile(f);
-    setPreview(URL.createObjectURL(f));
+    setEditingImage(URL.createObjectURL(f));
+    setRemovedImage(false);
   }
 
   function addTier() {
@@ -157,19 +159,23 @@ function BannerForm({ banner, onClose }: { banner: any | null; onClose: () => vo
             <label className="label">Banner image {!banner && '*'}</label>
             <div className="flex items-center gap-3">
               <div className="h-28 w-full rounded-xl border-2 border-dashed border-ink-200 overflow-hidden bg-ink-50 flex items-center justify-center">
-                {preview || banner?.imageUrl ? (
+                {!removedImage && editingImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={preview || banner.imageUrl} alt="" className="h-full w-full object-cover" />
+                  <img src={editingImage} alt="" className="h-full w-full object-cover" />
                 ) : (
-                  <button onClick={() => fileRef.current?.click()} className="flex flex-col items-center text-ink-400 hover:text-brand-500">
+                  <button type="button" onClick={() => fileRef.current?.click()} className="flex flex-col items-center text-ink-400 hover:text-brand-500">
                     <ImagePlus className="h-8 w-8" />
-                    <span className="text-xs mt-1">Click to upload</span>
+                    <span className="text-xs mt-1">Click to upload image</span>
                   </button>
                 )}
               </div>
             </div>
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => onFile(e.target.files?.[0] || null)} />
-            {(preview || banner?.imageUrl) && <button onClick={() => { setFile(null); setPreview(''); }} className="text-xs text-red-600 mt-1 hover:underline">Remove image</button>}
+            {!removedImage && editingImage && (
+              <button type="button" onClick={() => { setFile(null); setEditingImage(''); setRemovedImage(true); }} className="text-xs text-red-600 mt-1 hover:underline">
+                Remove image
+              </button>
+            )}
           </div>
 
           {/* Schedule */}

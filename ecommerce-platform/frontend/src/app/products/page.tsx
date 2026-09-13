@@ -17,6 +17,7 @@ export default function ProductsPage() {
   const sp = useSearchParams();
   const router = useRouter();
   const [page, setPage] = useState(1);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   // PRD_New §Marketplace.4: category filter from URL is now properly resolved on the backend
   const category = sp.get('category') || '';
@@ -121,7 +122,7 @@ export default function ProductsPage() {
 
       <div className="grid lg:grid-cols-[220px_1fr] gap-6">
         {/* Filters */}
-        <aside className="hidden lg:block">
+        <aside className={showMobileFilters ? "block" : "hidden lg:block"}>
           <div className="card p-4 space-y-4 sticky top-24">
             <div>
               <h3 className="label">Sort by</h3>

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import { useAuthStore } from '@/lib/authStore';
 import toast from 'react-hot-toast';
-import { Lock, Mail, ShieldAlert } from 'lucide-react';
+import { Lock, Mail, ShieldAlert, Eye, EyeOff } from 'lucide-react';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -16,6 +16,7 @@ export default function AdminLoginPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPw, setShowPw] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -56,7 +57,7 @@ export default function AdminLoginPage() {
     <div className="min-h-screen bg-ink-900 text-white flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <Link href="/" className="flex items-center gap-2 justify-center mb-6">
-          <span className="inline-flex h-10 px-2.5 items-center justify-center rounded-xl bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-700 text-white font-bold tracking-widest text-xs shadow-md">LOGO</span>
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-700 text-white font-black tracking-[0.18em] text-[10px] shadow-md">RAT</span>
           <span className="font-display text-2xl font-extrabold">Rana Ahmad Textile Admin</span>
         </Link>
         <div className="bg-ink-800 rounded-2xl p-6">
@@ -77,7 +78,10 @@ export default function AdminLoginPage() {
               <label className="label text-ink-300">Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-400" />
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input pl-10 bg-ink-700 border-ink-600 text-white" placeholder="••••••••" required />
+                <input type={showPw ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} className="input pl-10 pr-10 bg-ink-700 border-ink-600 text-white" placeholder="••••••••" required />
+                <button type="button" onClick={() => setShowPw((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-400 hover:text-white" aria-label={showPw ? 'Hide password' : 'Show password'}>
+                  {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
             <button type="submit" disabled={submitting} className="btn-primary w-full bg-brand-600 hover:bg-brand-700">

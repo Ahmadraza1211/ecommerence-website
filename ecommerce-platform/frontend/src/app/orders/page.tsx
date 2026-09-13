@@ -96,17 +96,18 @@ export default function OrdersPage() {
           {/* PRD_New V3 §My Orders.3: product-centric cards with status */}
           {orders.map((order: any) => {
             const firstItem = order.items[0];
+            const isCodRequest = order.isCodRequest;
             const isDelivered = order.status === 'DELIVERED';
-            const isCancelled = order.status === 'CANCELLED';
+            const isCancelled = order.status === 'CANCELLED' || order.status === 'REJECTED';
             const isChatAvailable = !isDelivered && !isCancelled && ['CONFIRMED', 'SHIPPED', 'OUT_FOR_DELIVERY'].includes(order.status);
-            const itemCount = order.items.reduce((s: number, i: any) => s + i.quantity, 0);
-            const productName = firstItem ? (order.items.length > 1 ? `${firstItem.title} +${order.items.length - 1}` : firstItem.title) : '—';
+            const itemCount = order.isCodRequest ? order.itemCount : order.items.reduce((s: number, i: any) => s + i.quantity, 0);
+            const productName = order.isCodRequest ? (order.itemCount > 1 ? `${order.firstItemTitle} +${order.itemCount - 1}` : order.firstItemTitle) : (firstItem ? (order.items.length > 1 ? `${firstItem.title} +${order.items.length - 1}` : firstItem.title) : '—');
 
             return (
               <Link
                 key={order._id}
-                href={`/orders/${order._id}`}
-                className="card p-4 hover:shadow-glow transition-all relative"
+                href={order.isCodRequest ? '/cod-requests' : `/orders/${order._id}`}
+                className={cn('card p-4 hover:shadow-glow transition-all relative', isCodRequest && order.status === 'PENDING_SELLER_APPROVAL' && 'border-2 border-amber-400 bg-amber-50/20')}
               >
                 {/* PRD_New V3: unread badge */}
                 {order.unreadCount > 0 && isChatAvailable && (
@@ -121,8 +122,8 @@ export default function OrdersPage() {
                   </div>
                   <div className="flex-1 min-w-0 pr-8">
                     <p className="font-medium text-sm line-clamp-2">{productName}</p>
-                    <span className={cn('badge text-[10px] mt-1', STATUS_BADGE[order.status] || 'badge-gray')}>
-                      {STATUS_LABEL[order.status] || order.status}
+                    <span className={cn('badge text-[10px] mt-1', isCodRequest ? (order.status === 'PENDING_SELLER_APPROVAL' ? 'badge-amber' : order.status === 'ACCEPTED' ? 'badge-green' : 'badge-red') : (STATUS_BADGE[order.status] || 'badge-gray'))}>
+                      {isCodRequest ? (order.status === 'PENDING_SELLER_APPROVAL' ? 'COD Pending' : order.status === 'ACCEPTED' ? 'COD Accepted' : 'COD Rejected') : (STATUS_LABEL[order.status] || order.status)}
                     </span>
                   </div>
                 </div>

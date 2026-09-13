@@ -21,12 +21,17 @@ export default function AdminCategoriesPage() {
     mutationFn: (id: string) => apiClient.delete(`/admin/categories/${id}`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'categories'] }); qc.invalidateQueries({ queryKey: ['categories'] }); toast.success('Deleted'); },
   });
+  // V3: Reorder mutation
+  const reorderMut = useMutation({
+    mutationFn: ({ id, direction }: { id: string; direction: string }) => apiClient.patch(`/admin/categories/${id}/reorder`, { direction }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'categories'] }); qc.invalidateQueries({ queryKey: ['categories'] }); },
+  });
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
         <h1 className="font-display text-2xl font-bold">Categories</h1>
-        <button onClick={() => { setEditing(null); setShowForm(true); }} className="btn-primary text-sm"><Plus className="h-4 w-4" /> Add category</button>
+        {!showForm && <button onClick={() => { setEditing(null); setShowForm(true); }} className="btn-primary text-sm"><Plus className="h-4 w-4" /> Add category</button>}
       </div>
 
       {showForm && (
@@ -54,9 +59,14 @@ export default function AdminCategoriesPage() {
               </tr>
             </thead>
             <tbody>
-              {data.items.map((c: any) => (
+              {data.items.map((c: any, catIdx: number) => (
                 <tr key={c._id} className="border-t border-ink-100">
                   <td className="p-3 flex items-center gap-2">
+                    {/* V3: Re-ordering buttons */}
+                    <div className="flex flex-col gap-0.5 mr-1">
+                      <button onClick={() => reorderMut.mutate({ id: c._id, direction: 'up' })} disabled={catIdx === 0} className="text-ink-400 hover:text-amber-600 disabled:opacity-30 text-xs">▲</button>
+                      <button onClick={() => reorderMut.mutate({ id: c._id, direction: 'down' })} disabled={catIdx === (data.items.length - 1)} className="text-ink-400 hover:text-amber-600 disabled:opacity-30 text-xs">▼</button>
+                    </div>
                     {c.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={c.imageUrl} alt="" className="h-8 w-8 rounded-lg object-cover" />
@@ -92,9 +102,23 @@ function CategoryForm({ category, categories, onClose }: { category: any | null;
   const [form, setForm] = useState({
     name: category?.name || '',
     parentCategoryId: category?.parentCategoryId || '',
-    sortOrder: category?.sortOrder ?? 0,
+    sortOrder: category?.sortOrder ?? (category ? 0 : (categories.length + 1)),
     isActive: category?.isActive ?? true,
   });
+
+  function handleParentChange(parentId: string) {
+    if (!category) {
+      if (parentId) {
+        const parentObj = categories.find((c) => String(c._id) === String(parentId));
+        const subCount = parentObj?.subcategories?.length || 0;
+        setForm((s) => ({ ...s, parentCategoryId: parentId, sortOrder: subCount + 1 }));
+      } else {
+        setForm((s) => ({ ...s, parentCategoryId: parentId, sortOrder: categories.length + 1 }));
+      }
+    } else {
+      setForm((s) => ({ ...s, parentCategoryId: parentId }));
+    }
+  }
 
   const saveMut = useMutation({
     mutationFn: async () => {
@@ -126,7 +150,7 @@ function CategoryForm({ category, categories, onClose }: { category: any | null;
         </div>
         <div>
           <label className="label">Parent category</label>
-          <select className="input" value={form.parentCategoryId} onChange={(e) => setForm((s) => ({ ...s, parentCategoryId: e.target.value }))}>
+          <select className="input" value={form.parentCategoryId} onChange={(e) => handleParentChange(e.target.value)}>
             <option value="">— None (top-level) —</option>
             {categories.filter((c) => c._id !== category?._id).map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
           </select>

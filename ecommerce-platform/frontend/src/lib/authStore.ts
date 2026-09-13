@@ -73,11 +73,17 @@ export const useAuthStore = create<AuthState>()(
         return !!u && roles.includes(u.role);
       },
       isAuthenticated: () => {
-        const { accessToken, accessTokenExpiresAt } = get();
-        if (!accessToken) return false;
+        const { accessToken, accessTokenExpiresAt, user } = get();
+        if (!accessToken || !user) return false;
         // PRD_New V3 §Platform-Wide.1: 60-second clock skew buffer
         // prevents unexpected logouts when the token expires "right now"
-        if (accessTokenExpiresAt && Date.now() > accessTokenExpiresAt + 60000) return false;
+        if (accessTokenExpiresAt && Date.now() > accessTokenExpiresAt + 60000) {
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('accessToken');
+          }
+          set({ user: null, accessToken: null, accessTokenExpiresAt: null });
+          return false;
+        }
         return true;
       },
     }),

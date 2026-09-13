@@ -138,6 +138,7 @@ router.patch('/:id', upload.single('image'), async (req, res: Response, next: Ne
 
     const file = req.file as Express.Multer.File | undefined;
     if (file) banner.imageUrl = (file as any).path;
+    else if (body.removeImage) banner.imageUrl = '';
     await banner.save();
     res.json({ banner });
   } catch (e) { next(e); }

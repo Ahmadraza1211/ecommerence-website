@@ -160,9 +160,12 @@ export default function ProductDetailPage() {
   // Price & quantity calculations when Bundle Deal is active
   const baseUnitPrice = selectedVariant?.priceOverride != null ? selectedVariant.priceOverride : (product?.basePrice || 0);
 
-  const effectivePrice = activeDealTier
-    ? Math.round(baseUnitPrice * activeDealTier.quantity * (1 - activeDealTier.discountPercent / 100))
+  const discountedUnitPrice = activeDealTier
+    ? Math.round(baseUnitPrice * (1 - activeDealTier.discountPercent / 100))
     : (product?.discountActive ? Math.max(0, baseUnitPrice - product.discountAmount) : baseUnitPrice);
+
+  const bundleTotal = activeDealTier ? discountedUnitPrice * activeDealTier.quantity : 0;
+  const effectivePrice = activeDealTier ? discountedUnitPrice : (product?.discountActive ? Math.max(0, baseUnitPrice - product.discountAmount) : baseUnitPrice);
 
   const effectiveQty = activeDealTier ? activeDealTier.quantity : qty;
 
@@ -301,17 +304,21 @@ export default function ProductDetailPage() {
               </>
             ) : null}
           </div>
+          {activeDealTier && (
+            <div className="mt-2 text-sm text-ink-600">
+              <span className="font-medium text-brand-700">Unit price:</span> {formatPKR(discountedUnitPrice)} each · <span className="font-medium text-brand-700">Bundle total:</span> {formatPKR(bundleTotal)}
+            </div>
+          )}
 
-          {/* SELECT A DEAL Section matching user mockup */}
           <div className="mt-5 space-y-3">
             <label className="label text-xs font-extrabold uppercase tracking-wider text-ink-700">SELECT A DEAL</label>
-            
             {dealTiersToDisplay.map((tier: any, i: number) => {
               const isSelected = activeDealTier?.quantity === tier.quantity;
-              const bundleTotal = Math.round(baseUnitPrice * tier.quantity * (1 - tier.discountPercent / 100));
+              const dealUnitPrice = Math.round(baseUnitPrice * (1 - tier.discountPercent / 100));
+              const dealTotal = dealUnitPrice * tier.quantity;
               return (
                 <div
-                  key={i}
+                  key={`${tier.quantity}-${i}`}
                   onClick={() => {
                     setActiveDealTier(tier);
                     setQty(tier.quantity);
@@ -333,14 +340,13 @@ export default function ProductDetailPage() {
                       🌞 {activeBundleBanner?.title || 'SUMMER SALE DEAL'} ({tier.quantity}x Units)
                     </p>
                     <p className="text-xs text-ink-500 mt-0.5">
-                      Buy {tier.quantity} units → Get {tier.discountPercent}% OFF ({formatPKR(bundleTotal)})
+                      Buy {tier.quantity} units → {tier.discountPercent}% OFF · {formatPKR(dealUnitPrice)} each / {formatPKR(dealTotal)} total
                     </p>
                   </div>
                 </div>
               );
             })}
 
-            {/* Standard Plan (Regular Price) */}
             <div
               onClick={() => {
                 setActiveDealTier(null);

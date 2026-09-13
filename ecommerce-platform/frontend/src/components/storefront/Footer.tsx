@@ -4,61 +4,18 @@ import { ShieldCheck, Truck, Headphones, Sparkles } from 'lucide-react';
 export function Footer() {
   return (
     <footer className="mt-16 relative bg-slate-900 text-slate-200">
-      {/* Above-Footer Card with Image 2 (25% opacity) */}
-      <div className="container-x relative z-10 -translate-y-8">
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-900/90 via-slate-800/95 to-slate-900 p-6 md:p-8 shadow-xl border border-amber-500/20 text-white">
-          <div 
-            className="absolute inset-0 pointer-events-none opacity-25 bg-cover bg-center"
-            style={{
-              backgroundImage: `url('/uploads/image2.jpg'), url('/images/image2.png'), url('/image2.png')`,
-            }}
-          />
-          <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6 text-center md:text-left items-center">
-            <div className="flex items-center gap-4 justify-center md:justify-start">
-              <div className="p-3 bg-amber-500/20 rounded-xl text-amber-400">
-                <Truck className="h-6 w-6" />
-              </div>
-              <div>
-                <h4 className="font-bold text-sm text-amber-300">Fast Nationwide Shipping</h4>
-                <p className="text-xs text-slate-300">Express delivery right to your doorstep</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4 justify-center md:justify-start">
-              <div className="p-3 bg-amber-500/20 rounded-xl text-amber-400">
-                <ShieldCheck className="h-6 w-6" />
-              </div>
-              <div>
-                <h4 className="font-bold text-sm text-amber-300">100% Quality Guaranteed</h4>
-                <p className="text-xs text-slate-300">Premium Pakistani fabric & craftsmanship</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4 justify-center md:justify-start">
-              <div className="p-3 bg-amber-500/20 rounded-xl text-amber-400">
-                <Headphones className="h-6 w-6" />
-              </div>
-              <div>
-                <h4 className="font-bold text-sm text-amber-300">WhatsApp COD Support</h4>
-                <p className="text-xs text-slate-300">Quick order tracking & live support</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Footer Main Section with Image 1 (25% opacity) */}
       <div className="relative overflow-hidden">
         <div 
           className="absolute inset-0 pointer-events-none opacity-25 bg-cover bg-center"
           style={{
-            backgroundImage: `url('/uploads/image1.jpg'), url('/images/image1.png'), url('/image1.png')`,
+            backgroundImage: `url('/bg-image1.jpeg')`,
           }}
         />
         <div className="container-x relative z-10 pb-12 pt-4 grid grid-cols-2 md:grid-cols-4 gap-8">
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2.5 mb-3">
-              <span className="inline-flex h-9 px-2.5 items-center justify-center rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 text-white font-bold tracking-widest text-xs shadow-md">
-                LOGO
-              </span>
+              <img src="/brand-rat-logo.svg" alt="Rana Ahmad Textile logo" className="h-9 w-9 rounded-xl shadow-md object-cover" />
               <span className="font-serif text-xl font-extrabold text-amber-400">
                 Rana Ahmad Textile
               </span>

@@ -63,9 +63,10 @@ async function getCartWithItems(userId: string) {
 router.get('/', async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     const cart = await getCartWithItems(req.user!.id);
+    // V5: Only show COD requests that have passed "Conversation Done"
     const pendingCod = await CodRequest.find({
       userId: req.user!.id,
-      status: { $in: ['AWAITING_CONVERSATION', 'PENDING_SELLER_APPROVAL'] },
+      status: { $in: ['PENDING_SELLER_APPROVAL', 'ACCEPTED'] },
     }).sort({ createdAt: -1 });
 
     // Compact COD entries — small icon style, no clutter
@@ -112,12 +113,27 @@ router.post('/items', [body('variantId').isString(), body('quantity').isInt({ mi
       if (!product) return res.status(404).json({ error: 'Product not found' });
       const variant = product.variants.find((v) => v._id?.equals(variantId));
       if (!variant) return res.status(404).json({ error: 'Variant not found' });
-      if (variant.stockQuantity <= 0) return res.status(400).json({ error: 'This item is out of stock' });
+      if (variant.stockQuantity <= 0) return res.status(400).json({ error: 'Insufficient stock — this item is out of stock' });
+
       let cart = await Cart.findOne({ userId: req.user!.id });
       if (!cart) cart = await Cart.create({ userId: req.user!.id, items: [] });
-      const existing = cart.items.find((i) => i.variantId.toString() === variantId);
-      if (existing) existing.quantity = Math.min(variant.stockQuantity, existing.quantity + quantity);
-      else cart.items.push({ variantId: new mongoose.Types.ObjectId(variantId), productId: product._id, quantity } as any);
+
+      // Cumulative stock check across all items (Standard + Bundle) in cart
+      const existingTotalQty = cart.items
+        .filter((i) => String(i.variantId) === String(variantId))
+        .reduce((s, i) => s + i.quantity, 0);
+
+      if (existingTotalQty + quantity > variant.stockQuantity) {
+        return res.status(400).json({ error: `Insufficient stock — adding ${quantity} exceeds available stock of ${variant.stockQuantity} (${existingTotalQty} already in cart)` });
+      }
+
+      // Find existing standard item (separate from bundle)
+      const existingStandard = cart.items.find((i) => String(i.variantId) === String(variantId) && !(i as any).isBundleDeal);
+      if (existingStandard) {
+        existingStandard.quantity = existingStandard.quantity + quantity;
+      } else {
+        cart.items.push({ variantId: new mongoose.Types.ObjectId(variantId), productId: product._id, quantity, isBundleDeal: false } as any);
+      }
       await cart.save();
       const updated = await getCartWithItems(req.user!.id);
       res.json({ cart: updated });
@@ -140,16 +156,29 @@ router.post('/apply-bundle', async (req: AuthenticatedRequest, res: Response, ne
     if (!product) return res.status(404).json({ error: 'Product not found' });
     const variant = product.variants.find((v) => v._id?.equals(variantId));
     if (!variant) return res.status(404).json({ error: 'Variant not found' });
-    if (variant.stockQuantity < tier.quantity) return res.status(400).json({ error: `Not enough stock — deal requires ${tier.quantity}, only ${variant.stockQuantity} available` });
-    const base = variant.priceOverride != null ? variant.priceOverride : product.basePrice;
-    const bundlePrice = Math.round(base * tier.quantity * (1 - tier.discountPercent / 100));
+
     let cart = await Cart.findOne({ userId: req.user!.id });
     if (!cart) cart = await Cart.create({ userId: req.user!.id, items: [] });
-    cart.items = cart.items.filter((i: any) => !i.isBundleDeal);
-    cart.items.push({ variantId: new mongoose.Types.ObjectId(variantId), productId: product._id, quantity: tier.quantity, isBundleDeal: true, bundlePrice, bundleBannerId: banner._id } as any);
+
+    // Cumulative stock check: existing standard qty + bundle deal qty
+    const existingStandardQty = cart.items
+      .filter((i) => String(i.variantId) === String(variantId) && !(i as any).isBundleDeal)
+      .reduce((s, i) => s + i.quantity, 0);
+
+    if (existingStandardQty + tier.quantity > variant.stockQuantity) {
+      return res.status(400).json({ error: `Insufficient stock — deal requires ${tier.quantity}, but you have ${existingStandardQty} in cart and only ${variant.stockQuantity} total stock available` });
+    }
+
+    const base = variant.priceOverride != null ? variant.priceOverride : product.basePrice;
+    const bundleUnitPrice = Math.round(base * (1 - tier.discountPercent / 100));
+    const bundleTotal = bundleUnitPrice * tier.quantity;
+
+    // Remove existing bundle item for this variant, keeping standard item separate
+    cart.items = cart.items.filter((i: any) => !(i.isBundleDeal && String(i.variantId) === String(variant._id)));
+    cart.items.push({ variantId: new mongoose.Types.ObjectId(variantId), productId: product._id, quantity: tier.quantity, isBundleDeal: true, bundlePrice: bundleUnitPrice, bundleBannerId: banner._id } as any);
     await cart.save();
     const updated = await getCartWithItems(req.user!.id);
-    res.json({ cart: updated });
+    res.json({ cart: updated, bundleTotal });
   } catch (e) { next(e); }
 });
 

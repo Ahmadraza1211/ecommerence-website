@@ -162,19 +162,32 @@ function ProfileTab() {
 
 function PasswordReveal() {
   const user = useAuthStore((s) => s.user);
+  const setAuth = useAuthStore((s) => s.setAuth);
+  const accessToken = useAuthStore((s) => s.accessToken);
   const [emailInput, setEmailInput] = useState('');
   const [showEmailPrompt, setShowEmailPrompt] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const [showPw, setShowPw] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState(user?.plainPassword || '');
   const [newPw, setNewPw] = useState('');
   const [saving, setSaving] = useState(false);
+  const [loadingPw, setLoadingPw] = useState(false);
 
-  function handleVerify(e: React.FormEvent) {
+  async function handleVerify(e: React.FormEvent) {
     e.preventDefault();
     if (emailInput.trim().toLowerCase() === user?.email?.toLowerCase()) {
-      setRevealed(true);
-      setShowPw(true);
-      toast.success('Email verified! You can now view or update your account password security.');
+      setLoadingPw(true);
+      try {
+        const res = await apiClient.post<{ password: string }>('/auth/reveal-password', { email: emailInput.trim() });
+        setCurrentPassword(res.password || user?.plainPassword || '');
+        setRevealed(true);
+        setShowPw(true);
+        toast.success('Email verified! Current password revealed.');
+      } catch (err: any) {
+        toast.error(err.response?.data?.error || 'Verification failed');
+      } finally {
+        setLoadingPw(false);
+      }
     } else {
       toast.error('Email does not match your account');
     }
@@ -188,7 +201,11 @@ function PasswordReveal() {
     }
     setSaving(true);
     try {
-      await apiClient.patch('/auth/me', { password: newPw });
+      const res = await apiClient.patch<{ user: any }>('/auth/me', { password: newPw });
+      setCurrentPassword(newPw);
+      if (res.user && accessToken) {
+        setAuth({ ...res.user, plainPassword: newPw }, accessToken);
+      }
       toast.success('Password updated successfully!');
       setNewPw('');
     } catch (err: any) {
@@ -203,43 +220,54 @@ function PasswordReveal() {
       {!revealed ? (
         <div>
           {!showEmailPrompt ? (
-            <div className="flex items-center justify-between p-3 border border-ink-100 dark:border-slate-700 rounded-xl bg-ink-50 dark:bg-slate-800">
-              <div>
-                <p className="text-sm font-semibold dark:text-slate-200">Account Password Security</p>
-                <p className="text-xs text-ink-500 dark:text-slate-400">Verify email to reveal & manage account password</p>
+            <div className="flex items-center justify-between p-3 border border-ink-100 rounded-xl bg-ink-50">
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-ink-900">Account Password</p>
+                <div className="mt-2 flex items-center gap-2">
+                  <input type="password" value="••••••••" readOnly className="input text-sm flex-1 bg-white/70" />
+                  <button type="button" onClick={() => setShowEmailPrompt(true)} className="btn-outline text-xs">Show</button>
+                </div>
               </div>
-              <button onClick={() => setShowEmailPrompt(true)} className="btn-outline text-xs">Verify Email to Reveal</button>
             </div>
           ) : (
-            <form onSubmit={handleVerify} className="p-3 border border-amber-200 dark:border-slate-700 rounded-xl bg-amber-50/50 dark:bg-slate-800 space-y-2">
-              <label className="text-xs font-semibold text-ink-700 dark:text-slate-300">Enter email ({user?.email}) to verify identity:</label>
+            <form onSubmit={handleVerify} className="p-3 border border-amber-200 rounded-xl bg-amber-50/50 space-y-2">
+              <label className="text-xs font-semibold text-ink-700">Enter your email to verify identity &amp; reveal password:</label>
               <div className="flex gap-2">
                 <input
                   type="email"
-                  placeholder="Confirm your email address"
+                  placeholder={user?.email || 'your@email.com'}
                   value={emailInput}
                   onChange={(e) => setEmailInput(e.target.value)}
                   className="input text-sm flex-1"
                   required
                 />
-                <button type="submit" className="btn-primary text-xs">Verify</button>
+                <button type="submit" disabled={loadingPw} className="btn-primary text-xs">
+                  {loadingPw ? 'Verifying...' : 'Verify'}
+                </button>
                 <button type="button" onClick={() => setShowEmailPrompt(false)} className="btn-ghost text-xs">Cancel</button>
               </div>
             </form>
           )}
         </div>
       ) : (
-        <div className="p-3 border border-green-200 dark:border-slate-700 rounded-xl bg-green-50/40 dark:bg-slate-800 space-y-3">
+        <div className="p-3 border border-green-200 rounded-xl bg-green-50/40 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-green-700 dark:text-green-400 flex items-center gap-1">
-              ✓ Email Verified — Password Unlocked
+            <span className="text-xs font-bold text-green-700 flex items-center gap-1">
+              ✓ Email Verified — Current Password Revealed
             </span>
             <button onClick={() => setShowPw((v) => !v)} className="text-xs text-brand-600 hover:underline font-medium">
-              {showPw ? 'Hide Field' : 'Show Field'}
+              {showPw ? 'Hide Password' : 'Show Password'}
             </button>
           </div>
           <form onSubmit={handleUpdatePassword} className="space-y-2">
-            <label className="text-xs text-ink-600 dark:text-slate-300 font-medium">Set New Account Password</label>
+            <label className="text-xs text-ink-600 font-medium">Current password</label>
+            <input
+              type={showPw ? 'text' : 'password'}
+              value={currentPassword || '••••••••'}
+              readOnly
+              className="input text-sm w-full bg-white font-mono font-medium text-ink-900"
+            />
+            <label className="text-xs text-ink-600 font-medium">Set new password</label>
             <div className="flex gap-2">
               <input
                 type={showPw ? 'text' : 'password'}

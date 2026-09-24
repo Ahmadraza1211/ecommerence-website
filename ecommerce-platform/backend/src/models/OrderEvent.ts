@@ -9,6 +9,7 @@ export type OrderEventType =
   | 'ORDER_OUT_FOR_DELIVERY'
   | 'ORDER_DELIVERED'
   | 'ORDER_CANCELLED'
+  | 'ORDER_UPDATED'
   | 'MESSAGE_SENT'
   | 'QUANTITY_ADJUSTED';
 
@@ -28,7 +29,7 @@ const orderEventSchema = new Schema<OrderEventDocument>(
     type: { type: String, enum: [
       'COD_REQUEST_CREATED', 'COD_REQUEST_ACCEPTED', 'COD_REQUEST_REJECTED',
       'ORDER_CONFIRMED', 'ORDER_SHIPPED', 'ORDER_OUT_FOR_DELIVERY',
-      'ORDER_DELIVERED', 'ORDER_CANCELLED', 'MESSAGE_SENT', 'QUANTITY_ADJUSTED',
+      'ORDER_DELIVERED', 'ORDER_CANCELLED', 'ORDER_UPDATED', 'MESSAGE_SENT', 'QUANTITY_ADJUSTED',
     ], required: true },
     actorRole: { type: String, enum: ['BUYER', 'SELLER', 'SYSTEM'], default: 'SYSTEM' },
     actorId: { type: Schema.Types.ObjectId, ref: 'User', default: null },

@@ -7,6 +7,7 @@ export interface IUser extends Document {
   email: string;
   phone?: string;
   passwordHash: string;
+  plainPassword?: string;
   role: UserRole;
   avatarUrl?: string;
   isVerified: boolean;
@@ -22,6 +23,7 @@ const userSchema = new Schema<IUser>(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true, index: true },
     phone: { type: String, trim: true },
     passwordHash: { type: String, required: true },
+    plainPassword: { type: String },
     role: { type: String, enum: ['BUYER', 'ADMIN'], default: 'BUYER' },
     avatarUrl: { type: String },
     isVerified: { type: Boolean, default: false },

@@ -6,20 +6,21 @@ export const loginLimiter = rateLimit({
   max: env.LOGIN_MAX_ATTEMPTS,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: `Too many login attempts. Try again in ${env.LOGIN_LOCK_MINUTES} minutes.` },
+  message: { error: `Too many login attempts. Please try again in ${env.LOGIN_LOCK_MINUTES} minutes.` },
 });
 
 export const adminLoginLimiter = rateLimit({
   windowMs: env.LOGIN_LOCK_MINUTES * 60 * 1000,
-  max: Math.max(3, Math.floor(env.LOGIN_MAX_ATTEMPTS / 2)),
+  max: env.LOGIN_MAX_ATTEMPTS,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Too many admin login attempts. Try again later.' },
+  message: { error: `Too many login attempts. Please try again in ${env.LOGIN_LOCK_MINUTES} minutes.` },
 });
 
 export const apiLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 120,
+  max: 300,
   standardHeaders: true,
   legacyHeaders: false,
 });
+

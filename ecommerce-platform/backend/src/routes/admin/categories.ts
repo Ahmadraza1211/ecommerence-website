@@ -81,17 +81,16 @@ router.patch('/:id', upload.single('image'), async (req, res: Response, next: Ne
 // DELETE /admin/categories/:id
 router.delete('/:id', async (req, res: Response, next: NextFunction) => {
   try {
-    // V5: Unlink products from this category instead of blocking deletion
-    await Product.updateMany({ categoryId: req.params.id }, { $unset: { categoryId: 1 } });
-    // Also delete any subcategories (and unlink their products too)
     const subCats = await Category.find({ parentCategoryId: req.params.id }).select('_id');
     const subIds = subCats.map((s) => s._id);
-    if (subIds.length > 0) {
-      await Product.updateMany({ categoryId: { $in: subIds } }, { $unset: { categoryId: 1 } });
-    }
+
+    const categoryIdsToUnlink = [req.params.id, ...subIds.map(String)];
+
+    await Product.updateMany({ categoryId: { $in: categoryIdsToUnlink } }, { $unset: { categoryId: 1 } });
     await Category.deleteMany({ parentCategoryId: req.params.id });
     await Category.findByIdAndDelete(req.params.id);
-    res.json({ ok: true });
+
+    res.json({ ok: true, deletedSubcategories: subIds.length });
   } catch (e) { next(e); }
 });
 

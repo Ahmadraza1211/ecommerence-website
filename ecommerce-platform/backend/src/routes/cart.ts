@@ -63,10 +63,11 @@ async function getCartWithItems(userId: string) {
 router.get('/', async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     const cart = await getCartWithItems(req.user!.id);
-    // V5: Only show COD requests that have passed "Conversation Done"
+    // Only show active COD requests waiting for seller approval in Cart.
+    // Once ACCEPTED or REJECTED, they disappear from "Your Cart".
     const pendingCod = await CodRequest.find({
       userId: req.user!.id,
-      status: { $in: ['PENDING_SELLER_APPROVAL', 'ACCEPTED'] },
+      status: 'PENDING_SELLER_APPROVAL',
     }).sort({ createdAt: -1 });
 
     // Compact COD entries — small icon style, no clutter

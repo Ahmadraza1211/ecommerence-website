@@ -46,7 +46,7 @@ export function MobileTabBar() {
               key={href}
               href={href}
               className={cn(
-                'flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium relative',
+                'flex min-h-[68px] flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] font-medium relative',
                 active ? 'text-amber-600' : 'text-ink-500 dark:text-slate-400'
               )}
             >
@@ -59,7 +59,7 @@ export function MobileTabBar() {
         {/* More button */}
         <button
           onClick={() => setMoreOpen(true)}
-          className={cn('flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium', moreOpen ? 'text-amber-600' : 'text-ink-500 dark:text-slate-400')}
+          className={cn('flex min-h-[68px] flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] font-medium', moreOpen ? 'text-amber-600' : 'text-ink-500 dark:text-slate-400')}
         >
           <MoreHorizontal className="h-5 w-5" />
           <span>More</span>

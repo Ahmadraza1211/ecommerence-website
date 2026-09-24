@@ -44,7 +44,7 @@ export interface IProduct extends Document {
   material?: string;   // PRD_New §Edit Product.4: Material field on Basic Info
   customFields?: ICustomField[];
   tags: string[];
-  images: { url: string; sortOrder: number; isPrimary: boolean }[];
+  images: { url: string; sortOrder: number; isPrimary: boolean; variantColor?: string }[];
   attributes: IAttribute[];
   attributeValues: IAttributeValue[];
   variants: IVariant[];
@@ -84,6 +84,7 @@ const productSchema = new Schema<IProduct>(
         url: { type: String, required: true },
         sortOrder: { type: Number, default: 0 },
         isPrimary: { type: Boolean, default: false },
+        variantColor: { type: String, default: 'Default' },
       },
     ],
     attributes: [

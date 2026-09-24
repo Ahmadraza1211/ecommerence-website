@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, Fragment } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
 import { Skeleton, EmptyState } from '@/components/ui/Skeleton';
@@ -16,15 +16,33 @@ export default function AdminCategoriesPage() {
 
   const [editing, setEditing] = useState<any | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [newSubCategoryFor, setNewSubCategoryFor] = useState<string | null>(null);
+  const [newSubCategoryName, setNewSubCategoryName] = useState('');
+  const [newSubCategoryActive, setNewSubCategoryActive] = useState(true);
+  const [newSubCategorySort, setNewSubCategorySort] = useState(1);
 
   const delMut = useMutation({
     mutationFn: (id: string) => apiClient.delete(`/admin/categories/${id}`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'categories'] }); qc.invalidateQueries({ queryKey: ['categories'] }); toast.success('Deleted'); },
   });
-  // V3: Reorder mutation
   const reorderMut = useMutation({
     mutationFn: ({ id, direction }: { id: string; direction: string }) => apiClient.patch(`/admin/categories/${id}/reorder`, { direction }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'categories'] }); qc.invalidateQueries({ queryKey: ['categories'] }); },
+  });
+
+  const createSubCatMut = useMutation({
+    mutationFn: async ({ parentId, name, sortOrder, isActive }: { parentId: string; name: string; sortOrder: number; isActive: boolean }) =>
+      apiClient.post('/admin/categories', { payload: JSON.stringify({ name, parentCategoryId: parentId, sortOrder, isActive }) }),
+    onSuccess: () => {
+      toast.success('Subcategory added');
+      setNewSubCategoryFor(null);
+      setNewSubCategoryName('');
+      setNewSubCategorySort(1);
+      setNewSubCategoryActive(true);
+      qc.invalidateQueries({ queryKey: ['admin', 'categories'] });
+      qc.invalidateQueries({ queryKey: ['categories'] });
+    },
+    onError: (e: any) => toast.error(e.response?.data?.error || 'Failed to add subcategory'),
   });
 
   return (
@@ -60,31 +78,119 @@ export default function AdminCategoriesPage() {
             </thead>
             <tbody>
               {data.items.map((c: any, catIdx: number) => (
-                <tr key={c._id} className="border-t border-ink-100">
-                  <td className="p-3 flex items-center gap-2">
-                    {/* V3: Re-ordering buttons */}
-                    <div className="flex flex-col gap-0.5 mr-1">
-                      <button onClick={() => reorderMut.mutate({ id: c._id, direction: 'up' })} disabled={catIdx === 0} className="text-ink-400 hover:text-amber-600 disabled:opacity-30 text-xs">▲</button>
-                      <button onClick={() => reorderMut.mutate({ id: c._id, direction: 'down' })} disabled={catIdx === (data.items.length - 1)} className="text-ink-400 hover:text-amber-600 disabled:opacity-30 text-xs">▼</button>
-                    </div>
-                    {c.imageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={c.imageUrl} alt="" className="h-8 w-8 rounded-lg object-cover" />
-                    ) : (
-                      <div className="h-8 w-8 rounded-lg bg-ink-100" />
-                    )}
-                    <span className="font-medium">{c.name}</span>
-                  </td>
-                  <td className="p-3 text-ink-500">{c.slug}</td>
-                  <td className="p-3">{c.sortOrder}</td>
-                  <td className="p-3">{c.isActive ? <span className="badge-green">Yes</span> : <span className="badge-gray">No</span>}</td>
-                  <td className="p-3">
-                    <div className="flex gap-1 justify-end">
-                      <button onClick={() => { setEditing(c); setShowForm(true); }} className="btn-ghost p-1.5"><Pencil className="h-4 w-4" /></button>
-                      <button onClick={() => { if (confirm('Delete?')) delMut.mutate(c._id); }} className="btn-ghost p-1.5 text-red-600"><Trash2 className="h-4 w-4" /></button>
-                    </div>
-                  </td>
-                </tr>
+                <Fragment key={c._id}>
+                  <tr className="border-t border-ink-100">
+                    <td className="p-3 flex items-center gap-2">
+                      <div className="flex flex-col gap-0.5 mr-1">
+                        <button onClick={() => reorderMut.mutate({ id: c._id, direction: 'up' })} disabled={catIdx === 0} className="text-ink-400 hover:text-amber-600 disabled:opacity-30 text-xs">▲</button>
+                        <button onClick={() => reorderMut.mutate({ id: c._id, direction: 'down' })} disabled={catIdx === (data.items.length - 1)} className="text-ink-400 hover:text-amber-600 disabled:opacity-30 text-xs">▼</button>
+                      </div>
+                      {c.imageUrl ? (
+                        <img src={c.imageUrl} alt="" className="h-8 w-8 rounded-lg object-cover" />
+                      ) : (
+                        <div className="h-8 w-8 rounded-lg bg-ink-100" />
+                      )}
+                      <span className="font-medium">{c.name}</span>
+                    </td>
+                    <td className="p-3 text-ink-500">{c.slug}</td>
+                    <td className="p-3">{c.sortOrder}</td>
+                    <td className="p-3">{c.isActive ? <span className="badge-green">Yes</span> : <span className="badge-gray">No</span>}</td>
+                    <td className="p-3">
+                      <div className="flex gap-1 justify-end items-center">
+                        <button type="button" onClick={() => {
+                          setNewSubCategoryFor((prev) => prev === c._id ? null : c._id);
+                          setNewSubCategoryName('');
+                          setNewSubCategorySort((c.subcategories?.length || 0) + 1);
+                          setNewSubCategoryActive(true);
+                        }} className="btn-outline text-xs px-2 py-1.5">+ Add Subcategory</button>
+                        <button onClick={() => { setEditing(c); setShowForm(true); }} className="btn-ghost p-1.5"><Pencil className="h-4 w-4" /></button>
+                        <button onClick={() => { if (confirm('Delete?')) delMut.mutate(c._id); }} className="btn-ghost p-1.5 text-red-600"><Trash2 className="h-4 w-4" /></button>
+                      </div>
+                    </td>
+                  </tr>
+
+                  {(c.subcategories || []).map((sub: any, subIdx: number) => (
+                    <tr key={sub._id} className="border-t border-ink-100 bg-ink-50/60">
+                      <td className="p-3 pl-10">
+                        <div className="flex items-center gap-2">
+                          <span className="text-ink-400">•</span>
+                          <span>{sub.name}</span>
+                        </div>
+                      </td>
+                      <td className="p-3 text-ink-500">{sub.slug}</td>
+                      <td className="p-3">{sub.sortOrder}</td>
+                      <td className="p-3">{sub.isActive ? <span className="badge-green">Yes</span> : <span className="badge-gray">No</span>}</td>
+                      <td className="p-3">
+                        <div className="flex gap-1 justify-end">
+                          <button onClick={() => { setEditing(sub); setShowForm(true); }} className="btn-ghost p-1.5"><Pencil className="h-4 w-4" /></button>
+                          <button onClick={() => { if (confirm('Delete?')) delMut.mutate(sub._id); }} className="btn-ghost p-1.5 text-red-600"><Trash2 className="h-4 w-4" /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+
+                  {newSubCategoryFor === c._id && (
+                    <tr className="border-t border-ink-100 bg-ink-50/80">
+                      <td className="p-3 pl-10">
+                        <input
+                          className="input text-sm"
+                          value={newSubCategoryName}
+                          onChange={(e) => setNewSubCategoryName(e.target.value)}
+                          placeholder="e.g., Accessories"
+                          aria-label="Subcategory name"
+                        />
+                      </td>
+                      <td className="p-3">
+                        <input
+                          className="input text-sm"
+                          value={newSubCategoryName ? newSubCategoryName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') : ''}
+                          readOnly
+                          placeholder="e.g., fashion/accessories"
+                          aria-label="Subcategory slug"
+                        />
+                      </td>
+                      <td className="p-3">
+                        <input
+                          type="number"
+                          className="input text-sm"
+                          value={newSubCategorySort}
+                          onChange={(e) => setNewSubCategorySort(Number(e.target.value) || 1)}
+                          aria-label="Subcategory sort"
+                        />
+                      </td>
+                      <td className="p-3">
+                        <label className="flex items-center gap-2">
+                          <input type="checkbox" checked={newSubCategoryActive} onChange={(e) => setNewSubCategoryActive(e.target.checked)} className="rounded text-brand-600" />
+                          <span className="text-xs">Yes</span>
+                        </label>
+                      </td>
+                      <td className="p-3">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!newSubCategoryName.trim()) {
+                                toast.error('Please enter a subcategory name');
+                                return;
+                              }
+                              createSubCatMut.mutate({
+                                parentId: c._id,
+                                name: newSubCategoryName.trim(),
+                                sortOrder: newSubCategorySort,
+                                isActive: newSubCategoryActive,
+                              });
+                            }}
+                            disabled={createSubCatMut.isPending}
+                            className="btn-primary text-xs"
+                          >
+                            {createSubCatMut.isPending ? 'Saving...' : '+ Add Subcategory'}
+                          </button>
+                          <button type="button" onClick={() => setNewSubCategoryFor(null)} className="btn-ghost text-xs">Cancel</button>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
             </tbody>
           </table>
@@ -113,7 +219,8 @@ function CategoryForm({ category, categories, onClose }: { category: any | null;
         const subCount = parentObj?.subcategories?.length || 0;
         setForm((s) => ({ ...s, parentCategoryId: parentId, sortOrder: subCount + 1 }));
       } else {
-        setForm((s) => ({ ...s, parentCategoryId: parentId, sortOrder: categories.length + 1 }));
+        const topLevelCount = categories.filter((c) => !c.parentCategoryId).length;
+        setForm((s) => ({ ...s, parentCategoryId: parentId, sortOrder: topLevelCount + 1 }));
       }
     } else {
       setForm((s) => ({ ...s, parentCategoryId: parentId }));

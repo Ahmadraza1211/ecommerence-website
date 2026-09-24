@@ -93,11 +93,13 @@ router.post('/', upload.array('images', 8), async (req: AuthenticatedRequest, re
       return res.status(400).json({ error: 'Discount end time must be after the start time' });
     }
 
+    const imagesMeta = body.imagesMeta ? (typeof body.imagesMeta === 'string' ? JSON.parse(body.imagesMeta) : body.imagesMeta) : [];
     const files = req.files as Express.Multer.File[] | undefined;
     const images = (files || []).map((f, i) => ({
       url: (f as any).path || (f as any).secure_url || (f as any).url,
       sortOrder: i,
       isPrimary: i === 0,
+      variantColor: imagesMeta[i]?.variantColor || 'Default',
     }));
 
     const slug = uniqueSlug(title, (await Product.find({}).select('slug')).map((p) => p.slug));
@@ -218,14 +220,14 @@ router.patch('/:id', upload.array('images', 8), async (req: AuthenticatedRequest
     if (status) product.status = status;
     if (material !== undefined) product.material = material;
     if (customFields !== undefined) product.customFields = customFields;
-    if (attributes) {
+    if (Array.isArray(attributes) && attributes.length > 0) {
       const attrIdMap = new Map<string, mongoose.Types.ObjectId>();
       product.attributes = attributes.map((a: any) => {
         const realId = a._id && mongoose.Types.ObjectId.isValid(String(a._id)) ? new mongoose.Types.ObjectId(String(a._id)) : new mongoose.Types.ObjectId();
         if (a._id) attrIdMap.set(String(a._id), realId);
-        return { name: a.name, isGlobal: !!a.isGlobal };
+        return { _id: realId, name: a.name, isGlobal: !!a.isGlobal };
       });
-      if (attributeValues) {
+      if (Array.isArray(attributeValues) && attributeValues.length > 0) {
         product.attributeValues = attributeValues.map((av: any) => {
           const realAttrId = av.attributeId && attrIdMap.has(String(av.attributeId))
             ? attrIdMap.get(String(av.attributeId))!
@@ -235,7 +237,7 @@ router.patch('/:id', upload.array('images', 8), async (req: AuthenticatedRequest
           return { _id: realValueId, attributeId: realAttrId, value: av.value, displayMeta: av.displayMeta };
         });
       }
-      if (variants) {
+      if (Array.isArray(variants) && variants.length > 0) {
         product.variants = variants.map((v: any) => ({
           sku: v.sku || `SKU-${Date.now()}`,
           stockQuantity: Math.max(0, Number(v.stockQuantity) || 0),
@@ -248,22 +250,19 @@ router.patch('/:id', upload.array('images', 8), async (req: AuthenticatedRequest
           }),
         }));
       }
-    } else {
+    } else if (Array.isArray(variants) && variants.length > 0) {
       // No attributes change, but maybe variants stock update only
-      if (variants) {
-        // Preserve existing attribute-value mapping by id
-        product.variants = variants.map((v: any) => {
-          const existing = product.variants.find((ev: any) => String(ev._id) === String(v._id));
-          return {
-            _id: existing?._id,
-            sku: v.sku || existing?.sku || `SKU-${Date.now()}`,
-            stockQuantity: Math.max(0, Number(v.stockQuantity) || 0),
-            priceOverride: v.priceOverride != null && v.priceOverride !== '' ? Number(v.priceOverride) : null,
-            imageUrl: v.imageUrl || existing?.imageUrl,
-            attributeValues: existing?.attributeValues || [],
-          };
-        });
-      }
+      product.variants = variants.map((v: any) => {
+        const existing = product.variants.find((ev: any) => String(ev._id) === String(v._id));
+        return {
+          _id: existing?._id,
+          sku: v.sku || existing?.sku || `SKU-${Date.now()}`,
+          stockQuantity: Math.max(0, Number(v.stockQuantity) || 0),
+          priceOverride: v.priceOverride != null && v.priceOverride !== '' ? Number(v.priceOverride) : null,
+          imageUrl: v.imageUrl || existing?.imageUrl,
+          attributeValues: existing?.attributeValues || [],
+        };
+      });
     }
     if (isFeatured !== undefined) product.isFeatured = isFeatured;
     if (featuredRank !== undefined) product.featuredRank = featuredRank;
@@ -271,8 +270,14 @@ router.patch('/:id', upload.array('images', 8), async (req: AuthenticatedRequest
     if (featuredEndAt !== undefined) product.featuredEndAt = featuredEndAt ? new Date(featuredEndAt) : null;
 
     const files = req.files as Express.Multer.File[] | undefined;
+    const imagesMeta = body.imagesMeta ? (typeof body.imagesMeta === 'string' ? JSON.parse(body.imagesMeta) : body.imagesMeta) : [];
     if (existingImages !== undefined) {
-      product.images = existingImages;
+      product.images = existingImages.map((img: any) => ({
+        url: img.url,
+        sortOrder: img.sortOrder ?? 0,
+        isPrimary: !!img.isPrimary,
+        variantColor: img.variantColor || 'Default',
+      }));
     }
     if (files && files.length > 0) {
       const startIdx = product.images.length;
@@ -281,6 +286,7 @@ router.patch('/:id', upload.array('images', 8), async (req: AuthenticatedRequest
           url: (f as any).path || (f as any).secure_url || (f as any).url,
           sortOrder: startIdx + i,
           isPrimary: product.images.length === 0 && i === 0,
+          variantColor: imagesMeta[i]?.variantColor || 'Default',
         });
       });
     }

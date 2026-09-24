@@ -13,6 +13,7 @@ export interface AuthUser {
   role: Role;
   phone?: string;
   avatarUrl?: string;
+  plainPassword?: string;
 }
 
 interface AuthState {

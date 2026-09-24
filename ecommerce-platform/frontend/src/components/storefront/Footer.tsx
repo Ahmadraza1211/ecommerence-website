@@ -15,7 +15,7 @@ export function Footer() {
         <div className="container-x relative z-10 pb-12 pt-4 grid grid-cols-2 md:grid-cols-4 gap-8">
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2.5 mb-3">
-              <img src="/brand-rat-logo.svg" alt="Rana Ahmad Textile logo" className="h-9 w-9 rounded-xl shadow-md object-cover" />
+              <img src="/logo11.png" alt="Logo" className="h-9 w-9 rounded-xl shadow-md object-cover" />
               <span className="font-serif text-xl font-extrabold text-amber-400">
                 Rana Ahmad Textile
               </span>
@@ -42,10 +42,10 @@ export function Footer() {
           </div>
           <div>
             <h4 className="font-bold text-amber-400 mb-3 text-xs tracking-wider uppercase">Customer Care</h4>
-            <ul className="space-y-2 text-xs text-slate-400">
-              <li><span>COD confirmation via WhatsApp</span></li>
-              <li><span>Premium 7-day Exchange Policy</span></li>
-              <li><span>support@ranaahmadtextile.com</span></li>
+            <ul className="space-y-2 text-xs text-slate-300">
+              <li><span className="font-medium text-slate-200">Phone:</span> +92 3022580522</li>
+              <li><span className="font-medium text-slate-200">Email:</span> <a href="mailto:ghulamhadair414@gmail.com" className="hover:text-amber-400 transition-colors">ghulamhadair414@gmail.com</a></li>
+              <li><span className="font-medium text-slate-200">Address:</span> Outside Karkhana nazar opposite car parking stand makkah tower FAISALABAD</li>
             </ul>
           </div>
         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -58,10 +58,16 @@ export default function ProductForm({ productId }: { productId?: string }) {
   const [customFields, setCustomFields] = useState<{ name: string; value: string }[]>([]);
   const [existingImages, setExistingImages] = useState<any[]>([]);
   const [files, setFiles] = useState<File[]>([]);
+  const [filesMeta, setFilesMeta] = useState<{ variantColor: string }[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [newColor, setNewColor] = useState({ color: '', hex: '#000000' });
   const [customSize, setCustomSize] = useState('');
   const [builderSizes, setBuilderSizes] = useState<string[]>(PRESET_SIZES);
+
+  const availableVarieties = useMemo(() => {
+    const customColors = variantRows.map((r) => r.color.trim()).filter(Boolean);
+    return ['Default', ...Array.from(new Set(customColors))];
+  }, [variantRows]);
 
   // PRD_New V4: Properly pre-populate ALL fields on edit
   useEffect(() => {
@@ -252,7 +258,13 @@ export default function ProductForm({ productId }: { productId?: string }) {
         attributeValues,
         variants,
         customFields: customFields.filter((cf) => cf.name.trim() !== ''),
-        existingImages,
+        existingImages: existingImages.map((img, i) => ({
+          url: img.url,
+          sortOrder: i,
+          isPrimary: !!img.isPrimary,
+          variantColor: img.variantColor || 'Default',
+        })),
+        imagesMeta: filesMeta.map((m) => ({ variantColor: m.variantColor || 'Default' })),
       };
 
       const fd = new FormData();
@@ -275,9 +287,25 @@ export default function ProductForm({ productId }: { productId?: string }) {
     const arr = Array.from(fileList);
     setFiles((f) => [...f, ...arr]);
     setPreviews((p) => [...p, ...arr.map((f) => URL.createObjectURL(f))]);
+    setFilesMeta((m) => [...m, ...arr.map(() => ({ variantColor: 'Default' }))]);
   }
-  function removeNewImage(idx: number) { setFiles((f) => f.filter((_, i) => i !== idx)); setPreviews((p) => p.filter((_, i) => i !== idx)); }
-  function removeExistingImage(idx: number) { setExistingImages((imgs) => imgs.filter((_, i) => i !== idx)); }
+  function removeNewImage(idx: number) {
+    setFiles((f) => f.filter((_, i) => i !== idx));
+    setPreviews((p) => p.filter((_, i) => i !== idx));
+    setFilesMeta((m) => m.filter((_, i) => i !== idx));
+  }
+  function removeExistingImage(idx: number) {
+    setExistingImages((imgs) => imgs.filter((_, i) => i !== idx));
+  }
+  function setExistingImageVariety(idx: number, variantColor: string) {
+    setExistingImages((imgs) => imgs.map((img, i) => i === idx ? { ...img, variantColor } : img));
+  }
+  function setNewImageVariety(idx: number, variantColor: string) {
+    setFilesMeta((meta) => meta.map((m, i) => i === idx ? { ...m, variantColor } : m));
+  }
+  function setPrimaryExistingImage(idx: number) {
+    setExistingImages((imgs) => imgs.map((img, i) => ({ ...img, isPrimary: i === idx })));
+  }
 
   // Variant matrix helpers
   function toggleBuilderSize(size: string) {
@@ -466,30 +494,105 @@ export default function ProductForm({ productId }: { productId?: string }) {
 
       {/* Tab: Images */}
       {activeTab === 'images' && (
-        <div className="card p-5 max-w-2xl">
-          <h2 className="font-display font-bold mb-3">Product images</h2>
-          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-3">
-            {existingImages.map((img: any, i: number) => (
-              <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-ink-200">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={img.url} alt="" className="h-full w-full object-cover" />
-                <button onClick={() => removeExistingImage(i)} className="absolute top-1 right-1 h-5 w-5 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-red-600"><X className="h-3 w-3" /></button>
-                {img.isPrimary && <span className="absolute bottom-1 left-1 badge-brand text-[9px]">Primary</span>}
-              </div>
-            ))}
-            {previews.map((p, i) => (
-              <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-ink-200">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p} alt="" className="h-full w-full object-cover" />
-                <button onClick={() => removeNewImage(i)} className="absolute top-1 right-1 h-5 w-5 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-red-600"><X className="h-3 w-3" /></button>
-              </div>
-            ))}
-            <button onClick={() => fileRef.current?.click()} className="aspect-square rounded-lg border-2 border-dashed border-ink-200 hover:border-brand-300 flex flex-col items-center justify-center text-ink-400 hover:text-brand-500">
-              <ImagePlus className="h-6 w-6" /><span className="text-[10px] mt-1">Add</span>
+        <div className="card p-5 max-w-3xl space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-display font-bold text-lg">Product Images &amp; Variety Options</h2>
+              <p className="text-xs text-ink-500">Assign images to specific color varieties or keep as <strong>Default</strong> (storefront main).</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="btn-primary text-xs flex items-center gap-1.5 px-3 py-2"
+            >
+              <ImagePlus className="h-4 w-4" /> Add Images
             </button>
           </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {existingImages.map((img: any, i: number) => (
+              <div key={i} className="flex flex-col border border-ink-200 rounded-xl overflow-hidden bg-white shadow-sm">
+                <div className="relative aspect-square w-full bg-ink-100 overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={img.url} alt="" className="h-full w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeExistingImage(i)}
+                    className="absolute top-1.5 right-1.5 h-6 w-6 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                  {img.isPrimary ? (
+                    <span className="absolute bottom-1.5 left-1.5 badge-brand text-[10px] font-bold shadow">★ Primary</span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setPrimaryExistingImage(i)}
+                      className="absolute bottom-1.5 left-1.5 bg-black/50 hover:bg-black/70 text-white text-[10px] px-2 py-0.5 rounded-full"
+                    >
+                      Set Primary
+                    </button>
+                  )}
+                </div>
+                <div className="p-2 space-y-1 bg-ink-50/70 border-t border-ink-100">
+                  <label className="text-[10px] font-bold text-ink-600 uppercase">Variety / Option:</label>
+                  <select
+                    className="input text-xs py-1 px-2 w-full bg-white"
+                    value={img.variantColor || 'Default'}
+                    onChange={(e) => setExistingImageVariety(i, e.target.value)}
+                  >
+                    {availableVarieties.map((v) => (
+                      <option key={v} value={v}>
+                        {v === 'Default' ? 'Default (General)' : `Variety: ${v}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            ))}
+
+            {previews.map((p, i) => (
+              <div key={i} className="flex flex-col border border-brand-300 rounded-xl overflow-hidden bg-white shadow-sm ring-1 ring-brand-200">
+                <div className="relative aspect-square w-full bg-ink-100 overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={p} alt="" className="h-full w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeNewImage(i)}
+                    className="absolute top-1.5 right-1.5 h-6 w-6 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                  <span className="absolute bottom-1.5 left-1.5 bg-brand-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">New</span>
+                </div>
+                <div className="p-2 space-y-1 bg-brand-50/50 border-t border-brand-100">
+                  <label className="text-[10px] font-bold text-brand-700 uppercase">Variety / Option:</label>
+                  <select
+                    className="input text-xs py-1 px-2 w-full bg-white"
+                    value={filesMeta[i]?.variantColor || 'Default'}
+                    onChange={(e) => setNewImageVariety(i, e.target.value)}
+                  >
+                    {availableVarieties.map((v) => (
+                      <option key={v} value={v}>
+                        {v === 'Default' ? 'Default (General)' : `Variety: ${v}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="aspect-square rounded-xl border-2 border-dashed border-ink-200 hover:border-brand-400 hover:bg-brand-50/20 flex flex-col items-center justify-center text-ink-400 hover:text-brand-600 transition-all cursor-pointer min-h-[140px]"
+            >
+              <ImagePlus className="h-7 w-7 mb-1" />
+              <span className="text-xs font-semibold">Upload Image</span>
+            </button>
+          </div>
+
           <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => onFilesChange(e.target.files)} />
-          <p className="text-xs text-ink-500">First image is set as primary automatically.</p>
         </div>
       )}
 
@@ -591,22 +694,43 @@ export default function ProductForm({ productId }: { productId?: string }) {
             </div>
           ) : (
             <div className="space-y-4">
-              {variantRows.map((row, rowIdx) => (
-                <div key={rowIdx} className="card p-4 border border-ink-200 rounded-2xl bg-white shadow-sm">
-                  <div className="flex items-center justify-between border-b border-ink-100 pb-3 mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="h-5 w-5 rounded-full border border-ink-300 shadow-sm" style={{ backgroundColor: row.colorHex }} />
-                      <span className="font-bold text-base text-ink-900">{row.color}</span>
+              {variantRows.map((row, rowIdx) => {
+                const assignedImg = existingImages.find((img) => img.variantColor?.toLowerCase() === row.color.toLowerCase())?.url
+                  || (filesMeta.findIndex((m) => m.variantColor?.toLowerCase() === row.color.toLowerCase()) >= 0
+                    ? previews[filesMeta.findIndex((m) => m.variantColor?.toLowerCase() === row.color.toLowerCase())]
+                    : null);
+
+                return (
+                  <div key={rowIdx} className="card p-4 border border-ink-200 rounded-2xl bg-white shadow-sm">
+                    <div className="flex items-center justify-between border-b border-ink-100 pb-3 mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-6 w-6 rounded-full border border-ink-300 shadow-sm" style={{ backgroundColor: row.colorHex }} />
+                        <span className="font-bold text-base text-ink-900">{row.color}</span>
+                        {assignedImg ? (
+                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-brand-50 border border-brand-200 text-[11px] text-brand-700 font-medium">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={assignedImg} alt="" className="h-4 w-4 rounded object-cover" />
+                            <span>Variety Image Assigned</span>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setActiveTab('images')}
+                            className="text-[11px] text-ink-500 hover:text-brand-600 underline font-medium"
+                          >
+                            Using Default Image (Click to assign image)
+                          </button>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeColor(rowIdx)}
+                        title="Delete entire color variant"
+                        className="text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-all"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => removeColor(rowIdx)}
-                      title="Delete entire color variant"
-                      className="text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-all"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
 
                   <table className="w-full text-xs">
                     <thead>
@@ -674,10 +798,11 @@ export default function ProductForm({ productId }: { productId?: string }) {
                     </tbody>
                   </table>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
       )}
 
       {/* Tab: Pricing */}

@@ -44,7 +44,7 @@ export function Navbar() {
           <div className="flex items-center gap-4 h-16">
             {/* Logo & Brand */}
             <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-              <img src="/brand-rat-logo.svg" alt="Rana Ahmad Textile logo" className="h-9 w-9 rounded-xl shadow-md group-hover:scale-105 transition-transform object-cover" />
+              <img src="/logo1.jpeg" alt="Logo" className="h-9 w-9 rounded-xl shadow-md group-hover:scale-105 transition-transform object-cover" />
               <div className="flex flex-col">
                 <span className="font-serif text-lg md:text-xl font-extrabold tracking-tight bg-gradient-to-r from-amber-600 via-amber-500 to-amber-800 dark:from-amber-400 dark:via-yellow-300 dark:to-amber-500 bg-clip-text text-transparent drop-shadow-sm">
                   Rana Ahmad Textile

@@ -54,31 +54,39 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-ink-900 text-white flex items-center justify-center px-4">
+    <div
+      className="min-h-screen text-white flex items-center justify-center px-4"
+      style={{
+        backgroundImage: "linear-gradient(rgba(2, 6, 23, 0.6), rgba(2, 6, 23, 0.72)), url('/background.jpg')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
       <div className="w-full max-w-md">
-        <Link href="/" className="flex items-center gap-2 justify-center mb-6">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-700 text-white font-black tracking-[0.18em] text-[10px] shadow-md">RAT</span>
+        <Link href="/" className="flex items-center gap-2 justify-center mb-6 text-white">
+          <img src="/logo1.jpeg" alt="Rana Ahmad Textile logo" className="h-10 w-10 rounded-xl object-cover shadow-md" />
           <span className="font-display text-2xl font-extrabold">Rana Ahmad Textile Admin</span>
         </Link>
-        <div className="bg-ink-800 rounded-2xl p-6">
+        <div className="bg-slate-900/80 rounded-2xl p-6 shadow-2xl border border-white/10 backdrop-blur-sm">
           <div className="flex items-center gap-2 mb-1">
             <ShieldAlert className="h-5 w-5 text-amber-400" />
             <h1 className="font-display text-xl font-bold">Restricted area</h1>
           </div>
-          <p className="text-xs text-ink-400 mb-6">Seller/admin login. This path is not advertised in the storefront UI.</p>
+          <p className="text-xs text-ink-300 mb-6">Seller/admin login. This path is not advertised in the storefront UI.</p>
           <form onSubmit={submit} className="space-y-4">
             <div>
-              <label className="label text-ink-300">Email</label>
+              <label className="label text-ink-200">Email</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-400" />
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input pl-10 bg-ink-700 border-ink-600 text-white" placeholder="admin@ranaahmadtextile.com" required />
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input pl-10 bg-slate-800/80 border-slate-600 text-white" placeholder="admin@shopwave.demo" autoComplete="email" required />
               </div>
             </div>
             <div>
-              <label className="label text-ink-300">Password</label>
+              <label className="label text-ink-200">Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-400" />
-                <input type={showPw ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} className="input pl-10 pr-10 bg-ink-700 border-ink-600 text-white" placeholder="••••••••" required />
+                <input type={showPw ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} className="input pl-10 pr-10 bg-slate-800/80 border-slate-600 text-white" placeholder="••••••••" autoComplete="current-password" required />
                 <button type="button" onClick={() => setShowPw((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-400 hover:text-white" aria-label={showPw ? 'Hide password' : 'Show password'}>
                   {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -87,10 +95,10 @@ export default function AdminLoginPage() {
             <button type="submit" disabled={submitting} className="btn-primary w-full bg-brand-600 hover:bg-brand-700">
               {submitting ? 'Signing in...' : 'Sign in to admin'}
             </button>
+            <p className="text-[11px] text-ink-300 text-center pt-1">
+              Demo admin: <span className="font-medium text-white">admin@shopwave.demo</span> / <span className="font-medium text-white">admin123</span>
+            </p>
           </form>
-          <p className="text-[11px] text-ink-500 text-center mt-4">
-            Demo admin: <code className="text-ink-300">admin@ranaahmadtextile.com</code> / <code className="text-ink-300">admin123</code>
-          </p>
         </div>
       </div>
     </div>

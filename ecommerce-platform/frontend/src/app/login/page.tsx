@@ -53,10 +53,18 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-amber-50 flex items-center justify-center px-4 py-12">
-      <div className="card w-full max-w-md p-8">
+    <div
+      className="min-h-screen flex items-center justify-center px-4 py-12"
+      style={{
+        backgroundImage: "linear-gradient(rgba(15, 23, 42, 0.62), rgba(15, 23, 42, 0.68)), url('/background.jpg')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+      <div className="card w-full max-w-md p-8 bg-white/90 backdrop-blur-sm border border-white/40 shadow-2xl">
         <Link href="/" className="flex items-center gap-2 mb-6">
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-700 text-white font-black tracking-[0.18em] text-[10px] shadow-md">RAT</span>
+          <img src="/logo1.jpeg" alt="Rana Ahmad Textile logo" className="h-9 w-9 rounded-xl object-cover shadow-md" />
           <span className="font-display text-xl font-extrabold">Rana Ahmad Textile</span>
         </Link>
         <h1 className="font-display text-2xl font-bold mb-1">Welcome back</h1>

@@ -68,10 +68,10 @@ export function AnimatedCategoryShowcase({ categories, allProducts = [] }: Categ
       <div className="absolute -top-10 -right-10 h-36 w-36 rounded-full bg-amber-500/20 blur-3xl" />
       <div className="absolute -bottom-8 left-1/3 h-24 w-24 rounded-full bg-purple-500/20 blur-3xl" />
 
-      <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/95 to-transparent z-10 w-[72%] sm:w-[60%]" />
+      <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/95 to-transparent z-10 w-[58%] sm:w-[52%] lg:w-[46%]" />
 
       <div className="relative z-20 flex min-h-[160px] sm:min-h-[220px] items-center justify-between">
-        <div className="flex-1 max-w-[60%] sm:max-w-[44%] px-4 sm:px-8 py-5 sm:py-7">
+        <div className="w-[35%] sm:w-[38%] lg:w-[42%] px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-7">
           <div className="flex items-center gap-2 mb-2">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-gradient-to-r from-amber-500/15 to-brand-500/15 px-2.5 py-1 text-[9px] sm:text-[10px] font-extrabold uppercase tracking-[0.18em] text-amber-300">
               <Sparkles className="h-3 w-3 text-amber-400" />
@@ -79,7 +79,7 @@ export function AnimatedCategoryShowcase({ categories, allProducts = [] }: Categ
             </span>
           </div>
 
-          <h3 key={activeCategory?.name} className="font-display text-2xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight drop-shadow-md transition-all duration-500 line-clamp-2">
+          <h3 key={activeCategory?.name} className="font-display text-lg sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white leading-tight drop-shadow-md transition-all duration-500 line-clamp-2">
             {activeCategory?.name}
           </h3>
 

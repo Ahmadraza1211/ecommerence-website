@@ -39,6 +39,20 @@ export default function AdminOrderDetailPage() {
     msgEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messagesData?.items?.length]);
 
+  const [editingShipping, setEditingShipping] = useState(false);
+  const [shippingInput, setShippingInput] = useState<number>(0);
+
+  const updateShippingMut = useMutation({
+    mutationFn: (shippingFee: number) => apiClient.patch(`/admin/orders/${id}/shipping`, { shippingFee }),
+    onSuccess: () => {
+      toast.success('Shipping cost updated & notification sent to buyer!');
+      setEditingShipping(false);
+      qc.invalidateQueries({ queryKey: ['admin', 'order', id] });
+      qc.invalidateQueries({ queryKey: ['admin', 'orders'] });
+    },
+    onError: (e: any) => toast.error(e.response?.data?.error || 'Failed to update shipping fee'),
+  });
+
   const updateStatusMut = useMutation({
     mutationFn: (status: string) => apiClient.patch(`/admin/orders/${id}/status`, { status, rejectionReason: reason }),
     onSuccess: () => {
@@ -97,11 +111,69 @@ export default function AdminOrderDetailPage() {
                 </div>
               ))}
             </div>
-            {/* PRD_New V3 §Particular Order.7: standardized labeling */}
+            {/* Standardized labeling + Shipping Editor */}
             <div className="border-t border-ink-100 pt-3 mt-3 text-sm space-y-1">
               <div className="flex justify-between"><span className="text-ink-600">Subtotal</span><span>{formatPKR(order.subtotal)}</span></div>
               {order.discountAmount > 0 && <div className="flex justify-between text-green-600"><span>Discount: Rs {order.discountAmount}</span><span>-{formatPKR(order.discountAmount)}</span></div>}
-              <div className="flex justify-between"><span className="text-ink-600">Shipping</span><span>{order.shippingFee === 0 ? 'Rs 0 (Free)' : formatPKR(order.shippingFee)}</span></div>
+              
+              <div className="flex justify-between items-center py-1">
+                <span className="text-ink-600">Shipping Fee:</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">{order.shippingFee === 0 ? 'Rs 0 (Free)' : formatPKR(order.shippingFee)}</span>
+                  {!isFinal && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShippingInput(order.shippingFee || 0);
+                        setEditingShipping(true);
+                      }}
+                      className="text-xs text-brand-600 hover:underline font-semibold ml-1"
+                    >
+                      Edit
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {editingShipping && !isFinal && (
+                <div className="p-3 my-2 rounded-xl bg-brand-50/50 border border-brand-200 space-y-2">
+                  <label className="text-xs font-bold text-ink-700">Set Shipping Cost (PKR):</label>
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="number"
+                      min="0"
+                      value={shippingInput}
+                      onChange={(e) => setShippingInput(Math.max(0, Number(e.target.value)))}
+                      className="input text-xs flex-1 bg-white"
+                      placeholder="e.g. 200 (or 0 for Free)"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShippingInput(0)}
+                      className="btn-outline text-xs px-2 py-1.5"
+                    >
+                      Free (0)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateShippingMut.mutate(shippingInput)}
+                      disabled={updateShippingMut.isPending}
+                      className="btn-primary text-xs px-3 py-1.5"
+                    >
+                      {updateShippingMut.isPending ? 'Saving...' : 'Save & Notify Buyer'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingShipping(false)}
+                      className="btn-ghost text-xs px-2 py-1.5"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-ink-500">Updating shipping fee will recalculate total and instantly notify the buyer.</p>
+                </div>
+              )}
+
               <div className="flex justify-between font-bold text-base mt-1 border-t border-ink-100 pt-2"><span>Total</span><span>{formatPKR(order.total)}</span></div>
             </div>
           </div>

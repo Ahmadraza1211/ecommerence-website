@@ -200,6 +200,49 @@ router.patch('/:id/status', async (req: AuthenticatedRequest, res: Response, nex
   } catch (e) { next(e); }
 });
 
+/**
+ * PATCH /admin/orders/:id/shipping
+ * Allows Admin to add/modify shipping cost or set free shipping.
+ * Automatically recalculates order total and notifies the buyer.
+ */
+router.patch('/:id/shipping', async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const { shippingFee } = req.body;
+    if (shippingFee === undefined || isNaN(Number(shippingFee))) {
+      return res.status(400).json({ error: 'Valid shipping fee is required' });
+    }
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (['DELIVERED', 'CANCELLED', 'RETURNED'].includes(order.status)) {
+      return res.status(400).json({ error: `Cannot change shipping fee on an order that is ${order.status.toLowerCase()}` });
+    }
+
+    const fee = Math.max(0, Math.round(Number(shippingFee)));
+    const oldFee = order.shippingFee || 0;
+    order.shippingFee = fee;
+    order.total = Math.max(0, (order.subtotal || 0) - (order.discountAmount || 0) + fee);
+    await order.save();
+
+    await logOrderEvent({
+      orderId: String(order._id),
+      type: 'ORDER_UPDATED',
+      actorRole: 'SELLER',
+      actorId: req.user!.id,
+      message: `Shipping fee updated from Rs ${oldFee} to ${fee === 0 ? 'Free (Rs 0)' : `Rs ${fee}`}. Total is now Rs ${order.total}.`,
+    });
+
+    await pushNotification({
+      userId: String(order.userId),
+      type: 'ORDER_UPDATED',
+      title: 'Shipping Cost Updated',
+      body: `The shipping fee for your order has been updated to ${fee === 0 ? 'Free (Rs 0)' : `Rs ${fee}`}. New order total is Rs ${order.total}.`,
+      orderId: order._id,
+    });
+
+    res.json({ order });
+  } catch (e) { next(e); }
+});
+
 // GET /admin/orders/:id/messages
 router.get('/:id/messages', async (req, res: Response, next: NextFunction) => {
   try {

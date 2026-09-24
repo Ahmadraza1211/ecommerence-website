@@ -78,7 +78,7 @@ export default function MarketplacePage() {
 
       {/* V-2: Hero Banner Carousel — Left to Right sliding track with small gap */}
       {activeBanners.length > 0 && (
-        <div className="mb-6 relative rounded-2xl overflow-hidden h-44 sm:h-64 lg:h-80 group shadow-lg">
+        <div className="mb-6 relative rounded-2xl overflow-hidden h-52 sm:h-64 lg:h-80 group shadow-lg">
           <div
             className="flex h-full transition-transform duration-700 ease-out gap-2"
             style={{ transform: `translateX(-${bannerIdx * 100}%)` }}
@@ -89,25 +89,27 @@ export default function MarketplacePage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={banner.imageUrl} alt={banner.title} className="w-full h-full object-cover" />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
-                <div className="absolute bottom-0 left-0 p-5 sm:p-8 lg:p-12 text-white max-w-lg">
-                  <span className="inline-block px-2.5 py-1 rounded-full bg-amber-500/30 text-amber-300 text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-2 backdrop-blur-sm border border-amber-400/30">
-                    Featured Offer
-                  </span>
-                  <h2 className="font-display text-xl sm:text-3xl lg:text-4xl font-extrabold drop-shadow line-clamp-2 leading-tight">{banner.title}</h2>
-                  {banner.subtitle && <p className="text-xs sm:text-base mt-1 text-white/90 line-clamp-1">{banner.subtitle}</p>}
-                  {banner.bundleTiers?.length > 0 && (
-                    <div className="mt-2 flex gap-1 flex-wrap">
-                      {banner.bundleTiers.map((t: any, idx: number) => (
-                        <span key={idx} className="badge bg-amber-500 text-ink-950 font-bold text-[10px] sm:text-xs shadow">⚡ Buy {t.quantity} → {t.discountPercent}% OFF</span>
-                      ))}
-                    </div>
-                  )}
-                  {banner.ctaLink && (
-                    <Link href={banner.ctaLink} className="btn-primary mt-3 sm:mt-4 bg-amber-500 hover:bg-amber-600 text-ink-950 font-bold text-xs sm:text-sm px-4 py-2 inline-flex items-center gap-1.5 shadow-md">
-                      {banner.ctaText || 'Shop now'} <ChevronRight className="h-4 w-4" />
-                    </Link>
-                  )}
+                <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-transparent" />
+                <div className="absolute inset-y-0 left-0 flex items-center p-3 sm:p-6 lg:p-8 w-[38%] sm:w-[44%] lg:w-[45%]">
+                  <div className="max-w-[14rem] sm:max-w-[18rem] lg:max-w-[22rem] text-white">
+                    <span className="inline-block px-2 py-1 rounded-full bg-amber-500/30 text-amber-300 text-[9px] sm:text-[10px] lg:text-xs font-bold uppercase tracking-wider mb-2 backdrop-blur-sm border border-amber-400/30">
+                      Featured Offer
+                    </span>
+                    <h2 className="font-display text-base sm:text-2xl lg:text-4xl font-extrabold drop-shadow line-clamp-3 leading-tight">{banner.title}</h2>
+                    {banner.subtitle && <p className="text-[10px] sm:text-sm lg:text-base mt-1 text-white/90 line-clamp-2">{banner.subtitle}</p>}
+                    {banner.bundleTiers?.length > 0 && (
+                      <div className="mt-2 flex gap-1 flex-wrap">
+                        {banner.bundleTiers.map((t: any, idx: number) => (
+                          <span key={idx} className="badge bg-amber-500 text-ink-950 font-bold text-[9px] sm:text-[10px] lg:text-xs shadow">⚡ Buy {t.quantity} → {t.discountPercent}% OFF</span>
+                        ))}
+                      </div>
+                    )}
+                    {banner.ctaLink && (
+                      <Link href={banner.ctaLink} className="btn-primary mt-3 sm:mt-4 bg-amber-500 hover:bg-amber-600 text-ink-950 font-bold text-[10px] sm:text-xs lg:text-sm px-3 py-2 inline-flex items-center gap-1.5 shadow-md">
+                        {banner.ctaText || 'Shop now'} <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

@@ -64,22 +64,6 @@ export const BackgroundAudioPlayer = () => {
 
   if (!isMarketplaceOrProduct) return null;
 
-  return (
-    <button
-      type="button"
-      onClick={toggleMute}
-      title={isMuted ? 'Unmute Taj Audio' : 'Mute Taj Audio'}
-      className="fixed bottom-20 right-4 z-40 p-3 rounded-full bg-amber-500 text-slate-950 shadow-lg hover:bg-amber-400 transition-all border border-amber-300 flex items-center justify-center group"
-    >
-      {isMuted ? (
-        <VolumeX className="h-5 w-5 text-slate-900" />
-      ) : (
-        <Volume2 className="h-5 w-5 text-slate-950 animate-pulse" />
-      )}
-      <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs transition-all duration-300 text-xs font-bold pl-0 group-hover:pl-2">
-        {isMuted ? 'Play Audio' : 'Audio Playing'}
-      </span>
-    </button>
-  );
+  return null;
 };
 

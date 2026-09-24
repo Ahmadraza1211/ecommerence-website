@@ -8,9 +8,12 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-jakarta' });
 
 export const metadata: Metadata = {
-  title: 'Rana Ahmad Textile — Single-Seller Marketplace',
+  title: 'Rana Ahmad Textile',
   description: 'A premium textile marketplace experience with COD, WhatsApp confirmation, and full seller controls.',
   metadataBase: new URL('http://localhost:3000'),
+  icons: {
+    icon: '/logo1.jpeg',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

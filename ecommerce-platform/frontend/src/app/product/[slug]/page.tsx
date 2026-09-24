@@ -105,6 +105,21 @@ export default function ProductDetailPage() {
     }
   }, [allColors, selectedColorVal]);
 
+  useEffect(() => {
+    if (!product?.images?.length) return;
+    if (selectedColorVal) {
+      const idx = product.images.findIndex((img: any) =>
+        img.variantColor && img.variantColor.toLowerCase() === selectedColorVal.toLowerCase()
+      );
+      if (idx >= 0) {
+        setActiveImage(idx);
+        return;
+      }
+    }
+    const defIdx = product.images.findIndex((img: any) => img.isPrimary || img.variantColor?.toLowerCase() === 'default');
+    if (defIdx >= 0) setActiveImage(defIdx);
+  }, [selectedColorVal, product?.images]);
+
   const colorValueObj = useMemo(() => {
     return allColors.find((c: any) => c.value.toLowerCase() === selectedColorVal.toLowerCase()) || allColors[0];
   }, [allColors, selectedColorVal]);

@@ -64,7 +64,7 @@ export default function LoginPage() {
     >
       <div className="card w-full max-w-md p-8 bg-white/90 backdrop-blur-sm border border-white/40 shadow-2xl">
         <Link href="/" className="flex items-center gap-2 mb-6">
-          <img src="/logo1.jpeg" alt="Rana Ahmad Textile logo" className="h-9 w-9 rounded-xl object-cover shadow-md" />
+          <img src="/logo1.png" alt="Rana Ahmad Textile logo" className="h-9 w-9 rounded-xl object-cover shadow-md" />
           <span className="font-display text-xl font-extrabold">Rana Ahmad Textile</span>
         </Link>
         <h1 className="font-display text-2xl font-bold mb-1">Welcome back</h1>

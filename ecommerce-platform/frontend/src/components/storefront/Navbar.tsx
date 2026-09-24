@@ -44,13 +44,13 @@ export function Navbar() {
           <div className="flex items-center gap-4 h-16">
             {/* Logo & Brand */}
             <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-              <img src="/logo1.jpeg" alt="Logo" className="h-9 w-9 rounded-xl shadow-md group-hover:scale-105 transition-transform object-cover" />
+              <img src="/Logo12.png" alt="Logo" className="h-9 w-9 rounded-xl shadow-md group-hover:scale-105 transition-transform object-cover" />
               <div className="flex flex-col">
                 <span className="font-serif text-lg md:text-xl font-extrabold tracking-tight bg-gradient-to-r from-amber-600 via-amber-500 to-amber-800 dark:from-amber-400 dark:via-yellow-300 dark:to-amber-500 bg-clip-text text-transparent drop-shadow-sm">
                   Rana Ahmad Textile
                 </span>
                 <span className="text-[9px] tracking-widest text-amber-700/80 dark:text-amber-400/80 uppercase font-sans -mt-1 font-semibold">
-                  Haute Couture & Fabrics
+                  Marketplace & Fabrics
                 </span>
               </div>
             </Link>
@@ -84,9 +84,7 @@ export function Navbar() {
                   <button onClick={toggleMute} title={isMuted ? 'Unmute Audio' : 'Mute Audio'} className="p-2 rounded-xl text-ink-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                     {isMuted ? <VolumeX className="h-5 w-5 text-red-500" /> : <Volume2 className="h-5 w-5 text-amber-600 dark:text-amber-400 animate-pulse" />}
                   </button>
-                  <button onClick={toggleDarkMode} title={isDarkMode ? 'Light Mode' : 'Dark Mode'} className="p-2 rounded-xl text-ink-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                    {isDarkMode ? <Sun className="h-5 w-5 text-yellow-400" /> : <Moon className="h-5 w-5 text-slate-700" />}
-                  </button>
+
                 </>
               )}
 

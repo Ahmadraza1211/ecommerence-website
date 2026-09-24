@@ -24,13 +24,7 @@ export function StorefrontShell({ children }: { children: ReactNode }) {
     pathname?.startsWith('/products') ||
     pathname?.startsWith('/product/');
 
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
+
 
   if (isAdmin) {
     return <>{children}</>;

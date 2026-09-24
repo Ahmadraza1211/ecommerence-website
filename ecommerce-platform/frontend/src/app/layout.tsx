@@ -12,13 +12,19 @@ export const metadata: Metadata = {
   description: 'A premium textile marketplace experience with COD, WhatsApp confirmation, and full seller controls.',
   metadataBase: new URL('http://localhost:3000'),
   icons: {
-    icon: '/logo1.jpeg',
+    icon: '/logo1.png',
+    shortcut: '/logo1.png',
+    apple: '/logo1.png',
   },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${jakarta.variable}`}>
+      <head>
+        <link rel="icon" href="/logo1.png" sizes="any" />
+        <link rel="apple-touch-icon" href="/logo1.png" />
+      </head>
       <body className="font-sans">
         <Providers>
           <StorefrontShell>{children}</StorefrontShell>

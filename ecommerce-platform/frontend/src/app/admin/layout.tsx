@@ -74,7 +74,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className="hidden md:flex w-60 bg-ink-900 text-ink-200 flex-col">
         <div className="px-5 py-4 border-b border-ink-800">
           <Link href="/admin/dashboard" className="flex items-center gap-2">
-            <img src="/logo1.jpeg" alt="Logo" className="h-8 w-8 rounded-lg object-cover" />
+            <img src="/Logo1.jpeg" alt="Logo" className="h-8 w-8 rounded-lg object-cover" />
             <span className="font-display font-bold text-white">Rana Ahmad Textile Admin</span>
           </Link>
         </div>
@@ -116,7 +116,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* V5: Admin mobile header — better color, removed menu, added View Marketplace */}
       <div className="md:hidden fixed top-0 inset-x-0 bg-gradient-to-r from-indigo-950 to-purple-950 text-white p-3 z-30 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <img src="/logo1.jpeg" alt="Logo" className="h-7 w-7 rounded-md object-cover" />
+          <img src="/logo1.png" alt="Logo" className="h-7 w-7 rounded-md object-cover" />
           <span className="font-display font-bold text-sm truncate">Rana Ahmad Textile</span>
         </div>
         <div className="flex items-center gap-2 shrink-0">

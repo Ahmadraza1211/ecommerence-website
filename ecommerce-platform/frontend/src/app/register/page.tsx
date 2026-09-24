@@ -54,7 +54,7 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-50 flex items-center justify-center px-4 py-12">
       <div className="card w-full max-w-md p-8">
         <Link href="/" className="flex items-center gap-2 mb-6">
-          <img src="/logo1.jpeg" alt="Rana Ahmad Textile logo" className="h-9 w-9 rounded-xl object-cover shadow-md" />
+          <img src="/logo1.png" alt="Rana Ahmad Textile logo" className="h-9 w-9 rounded-xl object-cover shadow-md" />
           <span className="font-display text-xl font-extrabold">Rana Ahmad Textile</span>
         </Link>
         <h1 className="font-display text-2xl font-bold mb-1">Create your account</h1>

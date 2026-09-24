@@ -65,7 +65,7 @@ export default function AdminLoginPage() {
     >
       <div className="w-full max-w-md">
         <Link href="/" className="flex items-center gap-2 justify-center mb-6 text-white">
-          <img src="/logo1.jpeg" alt="Rana Ahmad Textile logo" className="h-10 w-10 rounded-xl object-cover shadow-md" />
+          <img src="/Logo1.jpeg" alt="Rana Ahmad Textile logo" className="h-10 w-10 rounded-xl object-cover shadow-md" />
           <span className="font-display text-2xl font-extrabold">Rana Ahmad Textile Admin</span>
         </Link>
         <div className="bg-slate-900/80 rounded-2xl p-6 shadow-2xl border border-white/10 backdrop-blur-sm">
@@ -79,7 +79,7 @@ export default function AdminLoginPage() {
               <label className="label text-ink-200">Email</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-400" />
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input pl-10 bg-slate-800/80 border-slate-600 text-white" placeholder="admin@shopwave.demo" autoComplete="email" required />
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input pl-10 bg-slate-800/80 border-slate-600 text-white" placeholder="you@gmail.com" autoComplete="email" required />
               </div>
             </div>
             <div>
@@ -95,9 +95,6 @@ export default function AdminLoginPage() {
             <button type="submit" disabled={submitting} className="btn-primary w-full bg-brand-600 hover:bg-brand-700">
               {submitting ? 'Signing in...' : 'Sign in to admin'}
             </button>
-            <p className="text-[11px] text-ink-300 text-center pt-1">
-              Demo admin: <span className="font-medium text-white">admin@shopwave.demo</span> / <span className="font-medium text-white">admin123</span>
-            </p>
           </form>
         </div>
       </div>

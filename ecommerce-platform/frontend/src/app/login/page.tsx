@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useAuthStore } from '@/lib/authStore';
 import { apiClient } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, Shield } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -54,7 +54,7 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4 py-12"
+      className="min-h-screen relative flex items-center justify-center px-4 py-12"
       style={{
         backgroundImage: "linear-gradient(rgba(15, 23, 42, 0.62), rgba(15, 23, 42, 0.68)), url('/background.jpg')",
         backgroundSize: 'cover',
@@ -62,7 +62,24 @@ export default function LoginPage() {
         backgroundRepeat: 'no-repeat',
       }}
     >
-      <div className="card w-full max-w-md p-8 bg-white/90 backdrop-blur-sm border border-white/40 shadow-2xl">
+      {/* Small Admin portal card on left side */}
+      <div className="fixed left-4 md:left-8 top-6 md:top-1/2 md:-translate-y-1/2 z-20">
+        <Link
+          href="/admin/login"
+          className="group flex items-center gap-3 p-3 rounded-2xl bg-slate-900/85 hover:bg-slate-900 text-white backdrop-blur-md border border-white/20 shadow-2xl transition-all duration-300 hover:scale-105 hover:border-amber-400/60 max-w-[210px]"
+        >
+          <div className="h-10 w-10 rounded-xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center shrink-0 group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors text-amber-400">
+            <Shield className="h-5 w-5" />
+          </div>
+          <div className="flex flex-col text-left">
+            <span className="text-[9px] uppercase font-bold tracking-wider text-amber-400">Restricted</span>
+            <span className="text-xs font-bold leading-tight text-white group-hover:text-amber-200">Admin Login</span>
+            <span className="text-[10px] text-ink-300 group-hover:text-ink-100">Seller Portal ›</span>
+          </div>
+        </Link>
+      </div>
+
+      <div className="card w-full max-w-md p-8 bg-white/90 backdrop-blur-sm border border-white/40 shadow-2xl relative z-10">
         <Link href="/" className="flex items-center gap-2 mb-6">
           <img src="/logo1.png" alt="Rana Ahmad Textile logo" className="h-9 w-9 rounded-xl object-cover shadow-md" />
           <span className="font-display text-xl font-extrabold">Rana Ahmad Textile</span>

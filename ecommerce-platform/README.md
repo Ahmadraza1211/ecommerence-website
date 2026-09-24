@@ -60,42 +60,7 @@ ecommerce-platform/
 
 ---
 
-## Quick Start
 
-```bash
-# 1. Install backend deps
-cd backend && npm install && cp .env.example .env
-
-# 2. Install frontend deps
-cd ../frontend && npm install && cp .env.example .env
-
-# 3. Install Python seed deps
-cd ../seed && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
-
-# 4. Start MongoDB (locally or use Atlas)
-sudo systemctl start mongod
-
-# 5. Start backend (terminal 1)
-cd ../backend && npm run dev
-
-# 6. Seed the database (terminal 2, one-time)
-cd ../seed && source .venv/bin/activate && python seed.py
-
-# 7. Start frontend (terminal 3)
-cd ../frontend && npm run dev
-```
-
-Open:
-- Storefront: <http://localhost:3000>
-- Admin login: <http://localhost:3000/admin/login>
-
-**Demo credentials** (created by the seed script):
-- Admin / Seller: `admin@shopwave.demo` / `admin123`
-- Buyer: `buyer@shopwave.demo` / `buyer123`
-
-See [`prerequisites.md`](./prerequisites.md) for the full setup guide including Cloudinary and MongoDB Atlas instructions.
-
-See [`docs/API.md`](./docs/API.md) for the full API documentation.
 
 ---
 

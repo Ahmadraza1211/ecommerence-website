@@ -1,16 +1,27 @@
-# 🚀 Production Deployment Environment Keys
+# ⚡ Complete Vercel Deployment Guide (Frontend + Backend)
 
-This file contains the exact keys and values configured for your Vercel URL:
-**`https://rana-ahmad-textile.vercel.app/`**
+Deploying both your **Frontend** and **Backend** on Vercel provides instant loading, eliminates CORS issues, and removes the 50-second sleep timeouts from Render free tier.
 
 ---
 
-## 1. Backend Environment Variables (For [Render.com](https://render.com))
+## ⚠️ Important Pre-requisite: MongoDB Atlas Network Access
+Before deploying on Vercel, make sure MongoDB Atlas allows connections from anywhere:
+1. Go to **[MongoDB Atlas](https://cloud.mongodb.com)** → **Network Access**.
+2. Click **Add IP Address**.
+3. Select **Allow Access From Anywhere** (`0.0.0.0/0`).
+4. Click **Confirm**.
 
-> **Where to add:** Render Dashboard → Your Web Service → **Environment** tab → Add Environment Variables.
+---
+
+## 📦 Project 1: Backend Deployment on Vercel
+
+1. In **[Vercel Dashboard](https://vercel.com)**, click **Add New...** → **Project**.
+2. Import your repository: `https://github.com/Ahmadraza1211/ecommerence-website`.
+3. In **Root Directory**, click Edit and select: `ecommerce-platform/backend`
+4. In **Project Name**, enter: `rana-ahmad-textile-backend` (or your preferred name).
+5. Open **Environment Variables** and add the following keys:
 
 ```env
-PORT=5000
 NODE_ENV=production
 CLIENT_URL=https://rana-ahmad-textile.vercel.app
 MONGODB_URI=mongodb+srv://Ahmad:1GhCTKOfd2k9QVvQ@cluster0.p2qcckk.mongodb.net/rana_ahmad_textile?retryWrites=true&w=majority
@@ -29,14 +40,28 @@ LOGIN_MAX_ATTEMPTS=10
 LOGIN_LOCK_MINUTES=5
 ```
 
+6. Click **Deploy**.
+7. Once deployed, copy your backend URL (e.g., `https://rana-ahmad-textile-backend.vercel.app`).
+
 ---
 
-## 2. Frontend Environment Variables (For [Vercel.com](https://vercel.com))
+## 🌐 Project 2: Frontend Deployment on Vercel
 
-> **Where to add:** Vercel Dashboard → Your Project → **Settings** → **Environment Variables**.
+1. In **Vercel Dashboard**, click **Add New...** → **Project**.
+2. Import the same repository (`ecommerence-website`).
+3. In **Root Directory**, click Edit and select: `ecommerce-platform/frontend`
+4. In **Project Name**, enter: `rana-ahmad-textile`
+5. Open **Environment Variables** and add:
 
 ```env
-NEXT_PUBLIC_API_URL=https://rana-ahmad-textile-backend.onrender.com/api
+NEXT_PUBLIC_API_URL=https://rana-ahmad-textile-backend.vercel.app/api
 ```
+*(Replace `https://rana-ahmad-textile-backend.vercel.app` with the exact backend URL assigned by Vercel in Project 1 above).*
 
-*(Note: If your backend URL on Render has a slightly different name, simply change the domain in `NEXT_PUBLIC_API_URL` while keeping `/api` at the end).*
+6. Click **Deploy**.
+
+---
+
+## 🧪 Testing Your Live Site
+- Open `https://rana-ahmad-textile.vercel.app/`
+- Products, categories, banners, user login, and admin panel will now load instantly at edge speeds without sleeping or cold starts.

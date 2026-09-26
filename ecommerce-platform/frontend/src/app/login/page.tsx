@@ -62,8 +62,8 @@ export default function LoginPage() {
         backgroundRepeat: 'no-repeat',
       }}
     >
-      {/* Small Admin portal card on left side */}
-      <div className="fixed left-4 md:left-8 top-6 md:top-1/2 md:-translate-y-1/2 z-20">
+      {/* Small Admin portal card on bottom right side */}
+      <div className="fixed right-4 md:right-1 bottom-6 z-20">
         <Link
           href="/admin/login"
           className="group flex items-center gap-3 p-3 rounded-2xl bg-slate-900/85 hover:bg-slate-900 text-white backdrop-blur-md border border-white/20 shadow-2xl transition-all duration-300 hover:scale-105 hover:border-amber-400/60 max-w-[210px]"

@@ -47,10 +47,15 @@ export function createApp() {
   });
 
   app.use('/api', apiLimiter);
+  app.use('/', apiLimiter);
   app.use('/api/auth/login', loginLimiter);
+  app.use('/auth/login', loginLimiter);
   app.use('/api/auth/admin/login', adminLoginLimiter);
+  app.use('/auth/admin/login', adminLoginLimiter);
 
+  // Support both /api/... and direct /... serverless routing
   app.use('/api', routes);
+  app.use('/', routes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

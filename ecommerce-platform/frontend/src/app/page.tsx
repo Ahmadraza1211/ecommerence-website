@@ -14,8 +14,6 @@ import { cn } from '@/lib/utils';
 export default function MarketplacePage() {
   const router = useRouter();
   const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState<string>('');
-  const [activeSubcategory, setActiveSubcategory] = useState<string>('');
   const [bannerIdx, setBannerIdx] = useState(0);
 
   const { data: banners } = useQuery({
@@ -39,10 +37,8 @@ export default function MarketplacePage() {
   });
 
   const productsQuery = useMemo(() => ({
-    category: activeCategory || undefined,
-    subcategory: activeSubcategory || undefined,
     sort: 'newest' as const,
-  }), [activeCategory, activeSubcategory]);
+  }), []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,27 +165,64 @@ export default function MarketplacePage() {
       )}
 
       {/* Categories */}
-      <section className="mb-8">
-        <h2 className="font-display text-xl font-bold mb-3 dark:text-slate-100">Categories</h2>
-        <div className="flex flex-wrap gap-2">
-          <button onClick={() => { setActiveCategory(''); setActiveSubcategory(''); }} className={cn('px-4 py-2 rounded-full text-sm font-medium transition-all', !activeCategory ? 'bg-amber-600 text-white' : 'bg-white dark:bg-slate-800 border border-ink-200 dark:border-slate-700 text-ink-700 dark:text-slate-200 hover:border-amber-300')}>All</button>
-          {categoryTree?.items?.map((cat: any) => {
-            const active = activeCategory === cat.slug;
-            return (
-              <div key={cat._id} className="relative group">
-                <button onClick={() => { setActiveCategory(cat.slug); setActiveSubcategory(''); }} className={cn('px-4 py-2 rounded-full text-sm font-medium transition-all', active ? 'bg-amber-600 text-white' : 'bg-white dark:bg-slate-800 border border-ink-200 dark:border-slate-700 text-ink-700 dark:text-slate-200 hover:border-amber-300')}>{cat.name}</button>
-                {cat.subcategories && cat.subcategories.length > 0 && (
-                  <div className="absolute top-full left-0 mt-1 hidden group-hover:block z-30 bg-white dark:bg-slate-800 border border-ink-100 dark:border-slate-700 rounded-xl shadow-card min-w-48 py-1">
-                    {cat.subcategories.map((sub: any) => (
-                      <button key={sub._id} onClick={() => { setActiveCategory(cat.slug); setActiveSubcategory(sub.slug); }} className="block w-full text-left px-3 py-2 text-sm text-ink-700 dark:text-slate-200 hover:bg-ink-50 dark:hover:bg-slate-700">{sub.name}</button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+      <section className="mb-10">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <h2 className="font-display text-xl font-bold dark:text-slate-100">Shop by Category</h2>
+          </div>
+          <Link href="/products?sort=discount" className="text-sm font-semibold text-amber-600 hover:text-amber-700 link-hover flex items-center gap-1">
+            View All Categories <ChevronRight className="h-4 w-4" />
+          </Link>
         </div>
-        {activeSubcategory && <button onClick={() => setActiveSubcategory('')} className="text-xs text-amber-600 mt-2 hover:underline">← Clear subcategory filter</button>}
+
+        {/* Category Pills with Dropdown Subcategories */}
+        <div className="flex flex-wrap gap-2.5">
+          <Link
+            href="/products?sort=discount"
+            className="px-4 py-2 rounded-full text-sm font-semibold transition-all bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-sm hover:from-amber-500 hover:to-amber-600 hover:shadow-md active:scale-95"
+          >
+            All Products
+          </Link>
+
+          {categoryTree?.items?.map((cat: any) => (
+            <div key={cat._id} className="relative group">
+              <Link
+                href={`/products?sort=discount&category=${cat.slug}`}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all bg-white dark:bg-slate-800/90 border border-ink-200 dark:border-slate-700 text-ink-800 dark:text-slate-100 shadow-sm hover:border-amber-400 hover:bg-amber-50/50 dark:hover:bg-slate-700/80 hover:text-amber-700 dark:hover:text-amber-400 active:scale-95"
+              >
+                <span>{cat.name}</span>
+                {cat.subcategories && cat.subcategories.length > 0 && (
+                  <ChevronRight className="h-3.5 w-3.5 text-ink-400 dark:text-slate-400 group-hover:rotate-90 transition-transform" />
+                )}
+              </Link>
+
+              {cat.subcategories && cat.subcategories.length > 0 && (
+                <div className="absolute top-full left-0 mt-1.5 hidden group-hover:block z-30 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border border-ink-100 dark:border-slate-700 rounded-2xl shadow-xl min-w-56 py-2 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <div className="px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                    {cat.name} Subcategories
+                  </div>
+                  {cat.subcategories.map((sub: any) => (
+                    <Link
+                      key={sub._id}
+                      href={`/products?sort=discount&category=${cat.slug}&subcategory=${sub.slug}`}
+                      className="block w-full text-left px-3.5 py-2 text-sm text-ink-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-slate-700/80 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
+                    >
+                      {sub.name}
+                    </Link>
+                  ))}
+                  <div className="border-t border-ink-100 dark:border-slate-700/80 mt-1 pt-1">
+                    <Link
+                      href={`/products?sort=discount&category=${cat.slug}`}
+                      className="block w-full text-left px-3.5 py-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline"
+                    >
+                      View all in {cat.name} →
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* All Products with infinite scroll */}

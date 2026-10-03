@@ -84,7 +84,7 @@ export function AnimatedCategoryShowcase({ categories, allProducts = [] }: Categ
           </h3>
 
           <Link
-            href={`/products?category=${activeCategory?.slug}`}
+            href={`/products?sort=discount&category=${activeCategory?.slug}`}
             className="mt-3 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-3 py-1.5 text-[10px] sm:text-xs font-bold text-brand-200 transition-colors hover:bg-brand-600/60 hover:text-white"
           >
             <span>Explore Collection</span>

@@ -36,9 +36,11 @@ export default function MarketplacePage() {
     queryFn: () => apiClient.get<{ items: any[] }>('/products', { sort: 'discount', limit: 4 }),
   });
 
+  const [homeSort, setHomeSort] = useState<'newest' | 'discount' | 'price-low' | 'price-high'>('newest');
+
   const productsQuery = useMemo(() => ({
-    sort: 'newest' as const,
-  }), []);
+    sort: homeSort,
+  }), [homeSort]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -225,9 +227,40 @@ export default function MarketplacePage() {
 
  
 
-      {/* All Products with infinite scroll */}
-      <section>
-        <div className="flex items-center gap-2 mb-3"><Package className="h-5 w-5 text-amber-600" /><h2 className="font-display text-xl font-bold dark:text-slate-100">All Products</h2></div>
+      {/* All Products with infinite scroll and mobile-friendly Sort Bar */}
+      <section className="mb-10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div className="flex items-center gap-2">
+            <Package className="h-5 w-5 text-amber-600" />
+            <h2 className="font-display text-xl font-bold dark:text-slate-100">All Products</h2>
+          </div>
+
+          {/* Quick Sort Filter Chips */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 sm:pb-0 scrollbar-none">
+            <span className="text-xs text-ink-500 dark:text-slate-400 font-medium shrink-0 hidden sm:inline mr-1">Sort:</span>
+            {[
+              { id: 'newest', label: 'Newest' },
+              { id: 'discount', label: '⚡ Big Discount' },
+              { id: 'price-low', label: 'Price: Low-High' },
+              { id: 'price-high', label: 'Price: High-Low' },
+            ].map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => setHomeSort(s.id as any)}
+                className={cn(
+                  'px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all shadow-sm active:scale-95',
+                  homeSort === s.id
+                    ? 'bg-amber-600 text-white shadow-amber-600/20'
+                    : 'bg-white dark:bg-slate-800 border border-ink-200 dark:border-slate-700 text-ink-700 dark:text-slate-200 hover:border-amber-300'
+                )}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <InfiniteProductGrid {...productsQuery} />
       </section>
 

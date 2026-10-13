@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { User, Sun, Moon, Volume2, VolumeX, MoreHorizontal } from 'lucide-react';
+import { User, Sun, Moon, Volume2, VolumeX, MoreHorizontal, LogIn } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import { useAuthStore } from '@/lib/authStore';
 import { useThemeStore } from '@/lib/themeStore';
@@ -43,13 +43,13 @@ export function Navbar() {
         <div className="container-x">
           <div className="flex items-center gap-4 h-16">
             {/* Logo & Brand */}
-            <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-              <img src="/Logo12.png" alt="Logo" className="h-9 w-9 rounded-xl shadow-md group-hover:scale-105 transition-transform object-cover" />
+            <Link href="/" className="flex items-center gap-2 sm:gap-2.5 shrink-0 group">
+              <img src="/Logo12.png" alt="Logo" className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl shadow-md group-hover:scale-105 transition-transform object-cover" />
               <div className="flex flex-col">
-                <span className="font-serif text-lg md:text-xl font-extrabold tracking-tight bg-gradient-to-r from-amber-600 via-amber-500 to-amber-800 dark:from-amber-400 dark:via-yellow-300 dark:to-amber-500 bg-clip-text text-transparent drop-shadow-sm">
+                <span className="font-serif text-base sm:text-xl font-extrabold tracking-tight bg-gradient-to-r from-amber-600 via-amber-500 to-amber-800 dark:from-amber-400 dark:via-yellow-300 dark:to-amber-500 bg-clip-text text-transparent drop-shadow-sm leading-tight">
                   Rana Ahmad Textile
                 </span>
-                <span className="text-[9px] tracking-widest text-amber-700/80 dark:text-amber-400/80 uppercase font-sans -mt-1 font-semibold">
+                <span className="text-[8px] sm:text-[9px] tracking-widest text-amber-700/80 dark:text-amber-400/80 uppercase font-sans font-semibold">
                   Marketplace & Fabrics
                 </span>
               </div>
@@ -78,7 +78,7 @@ export function Navbar() {
             )}
 
             {/* Right Actions */}
-            <div className="ml-auto flex items-center gap-1.5">
+            <div className="ml-auto flex items-center gap-1 sm:gap-2">
               {mounted && (
                 <>
                   <button
@@ -86,12 +86,12 @@ export function Navbar() {
                     onClick={toggleSound}
                     title={isPlaying ? 'Turn Sound Off' : 'Turn Sound On'}
                     aria-label={isPlaying ? 'Turn Sound Off' : 'Turn Sound On'}
-                    className="p-2 rounded-xl text-ink-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="p-1.5 sm:p-2 rounded-xl text-ink-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                   >
                     {isPlaying ? (
-                      <Volume2 className="h-5 w-5 text-amber-600 dark:text-amber-400 animate-pulse" />
+                      <Volume2 className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 dark:text-amber-400 animate-pulse" />
                     ) : (
-                      <VolumeX className="h-5 w-5 text-slate-400 dark:text-slate-500" />
+                      <VolumeX className="h-4 w-4 sm:h-5 sm:w-5 text-slate-400 dark:text-slate-500" />
                     )}
                   </button>
 
@@ -99,21 +99,30 @@ export function Navbar() {
               )}
 
               {!mounted ? (
-                <div className="h-9 w-20" aria-hidden="true" />
+                <div className="h-8 w-16" aria-hidden="true" />
               ) : !isAuthenticated ? (
-                <Link href="/login" className="btn-primary bg-amber-600 hover:bg-amber-700 border-none text-white text-sm px-4 py-2 rounded-xl shadow-md">
-                  Sign in
+                <Link
+                  href="/login"
+                  className="btn-primary bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 border-none text-white text-xs sm:text-sm font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all whitespace-nowrap"
+                >
+                  <LogIn className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span>Sign In</span>
                 </Link>
               ) : (
-                <Link href={user?.role === 'ADMIN' ? '/admin/dashboard' : '/account'} className="p-2 rounded-xl text-ink-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1.5 transition-colors">
-                  <User className="h-5 w-5" />
-                  <span className="hidden sm:inline text-sm font-medium">{user?.name?.split(' ')[0]}</span>
+                <Link
+                  href={user?.role === 'ADMIN' ? '/admin/dashboard' : '/account'}
+                  className="p-1.5 sm:p-2 rounded-xl text-ink-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1.5 transition-colors"
+                >
+                  <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-amber-100 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 flex items-center justify-center text-amber-800 dark:text-amber-300 font-bold text-xs shadow-sm">
+                    {user?.name ? user.name.charAt(0).toUpperCase() : <User className="h-4 w-4" />}
+                  </div>
+                  <span className="hidden sm:inline text-xs font-semibold">{user?.name?.split(' ')[0]}</span>
                 </Link>
               )}
 
               {/* V5: Removed hamburger — replaced with More button for mobile */}
               {mounted && isAuthenticated && (
-                <button onClick={() => setMoreOpen(true)} className="p-2 rounded-xl text-ink-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 md:hidden">
+                <button onClick={() => setMoreOpen(true)} className="p-1.5 sm:p-2 rounded-xl text-ink-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 md:hidden">
                   <MoreHorizontal className="h-5 w-5" />
                 </button>
               )}

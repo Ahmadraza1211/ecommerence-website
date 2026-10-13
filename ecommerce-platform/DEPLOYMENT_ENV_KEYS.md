@@ -24,7 +24,7 @@ Before deploying on Vercel, make sure MongoDB Atlas allows connections from anyw
 ```env
 NODE_ENV=production
 CLIENT_URL=https://rana-ahmad-textile.vercel.app
-MONGODB_URI=mongodb+srv://Ahmad:1GhCTKOfd2k9QVvQ@cluster0.p2qcckk.mongodb.net/rana_ahmad_textile?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://Ahmad:Ahmad2607@cluster0.p2qcckk.mongodb.net/rana_ahmad_textile?retryWrites=true&w=majority&appName=Cluster0
 JWT_SECRET=1uj2mkz0mVsefDz2wO6BMJU2qsZWmf7CQBRdLxwLFRU
 JWT_ACCESS_EXPIRES_IN=15m
 JWT_REFRESH_EXPIRES_IN=7d

@@ -1,69 +1,49 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { useAudioStore } from '@/lib/audioStore';
-import { Volume2, VolumeX } from 'lucide-react';
+import { useAudioStore, getGlobalAudio } from '@/lib/audioStore';
 
 export const BackgroundAudioPlayer = () => {
   const pathname = usePathname();
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const { isMuted, isPlaying, setIsPlaying, toggleMute } = useAudioStore();
+  const { isMuted, playAudio, pauseAudio } = useAudioStore();
 
-  // Active pages for "Taj" background sound
-  const isMarketplaceOrProduct = 
-    pathname === '/' || 
-    pathname?.startsWith('/products') || 
+  const isMarketplaceOrProduct =
+    pathname === '/' ||
+    pathname?.startsWith('/products') ||
     pathname?.startsWith('/product/');
 
   useEffect(() => {
-    if (!audioRef.current) {
-      // Use exact file path case /audio/Taj.mp3
-      const audio = new Audio('/audio/Taj.mp3');
-      audio.loop = true;
-      audio.volume = 0.5;
-      audioRef.current = audio;
+    const audio = getGlobalAudio();
+    if (!audio) return;
+
+    if (isMarketplaceOrProduct && !isMuted) {
+      // Attempt autoplay
+      audio.play().then(() => {
+        useAudioStore.setState({ isPlaying: true });
+      }).catch(() => {
+        // Autoplay blocked by browser until user interaction
+        useAudioStore.setState({ isPlaying: false });
+
+        const handleInteraction = () => {
+          const currentStore = useAudioStore.getState();
+          if (!currentStore.isMuted) {
+            audio.play().then(() => {
+              useAudioStore.setState({ isPlaying: true });
+            }).catch(() => {});
+          }
+          window.removeEventListener('click', handleInteraction);
+          window.removeEventListener('touchstart', handleInteraction);
+        };
+
+        window.addEventListener('click', handleInteraction, { once: true });
+        window.addEventListener('touchstart', handleInteraction, { once: true });
+      });
+    } else {
+      audio.pause();
+      useAudioStore.setState({ isPlaying: false });
     }
-
-    const audio = audioRef.current;
-    audio.muted = isMuted;
-
-    const tryPlay = () => {
-      if (isMarketplaceOrProduct && !isMuted) {
-        audio.play().then(() => {
-          setIsPlaying(true);
-        }).catch((err) => {
-          console.warn('[Audio Autoplay Blocked]', err);
-          setIsPlaying(false);
-        });
-      } else {
-        audio.pause();
-        setIsPlaying(false);
-      }
-    };
-
-    tryPlay();
-
-    // Browser autoplay unlock listener on user interaction
-    const handleUserInteraction = () => {
-      if (isMarketplaceOrProduct && !isMuted && audio.paused) {
-        audio.play().then(() => {
-          setIsPlaying(true);
-        }).catch(() => {});
-      }
-    };
-
-    window.addEventListener('click', handleUserInteraction, { once: true });
-    window.addEventListener('touchstart', handleUserInteraction, { once: true });
-
-    return () => {
-      window.removeEventListener('click', handleUserInteraction);
-      window.removeEventListener('touchstart', handleUserInteraction);
-    };
-  }, [pathname, isMarketplaceOrProduct, isMuted, setIsPlaying]);
-
-  if (!isMarketplaceOrProduct) return null;
+  }, [pathname, isMarketplaceOrProduct, isMuted]);
 
   return null;
 };
-

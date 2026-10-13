@@ -17,7 +17,7 @@ export function Navbar() {
   const user = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated());
   const { isDarkMode, toggleDarkMode } = useThemeStore();
-  const { isMuted, toggleMute } = useAudioStore();
+  const { isPlaying, toggleSound } = useAudioStore();
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -81,8 +81,18 @@ export function Navbar() {
             <div className="ml-auto flex items-center gap-1.5">
               {mounted && (
                 <>
-                  <button onClick={toggleMute} title={isMuted ? 'Unmute Audio' : 'Mute Audio'} className="p-2 rounded-xl text-ink-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                    {isMuted ? <VolumeX className="h-5 w-5 text-red-500" /> : <Volume2 className="h-5 w-5 text-amber-600 dark:text-amber-400 animate-pulse" />}
+                  <button
+                    type="button"
+                    onClick={toggleSound}
+                    title={isPlaying ? 'Turn Sound Off' : 'Turn Sound On'}
+                    aria-label={isPlaying ? 'Turn Sound Off' : 'Turn Sound On'}
+                    className="p-2 rounded-xl text-ink-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    {isPlaying ? (
+                      <Volume2 className="h-5 w-5 text-amber-600 dark:text-amber-400 animate-pulse" />
+                    ) : (
+                      <VolumeX className="h-5 w-5 text-slate-400 dark:text-slate-500" />
+                    )}
                   </button>
 
                 </>

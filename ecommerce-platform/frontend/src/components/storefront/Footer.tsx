@@ -45,7 +45,7 @@ export function Footer() {
             <ul className="space-y-2 text-xs text-slate-300">
               <li><span className="font-medium text-slate-200">Phone:</span> +92 3022580522</li>
               <li><span className="font-medium text-slate-200">Email:</span> <a href="mailto:ghulamhadair414@gmail.com" className="hover:text-amber-400 transition-colors">ghulamhadair414@gmail.com</a></li>
-              <li><span className="font-medium text-slate-200">Address:</span> Outside Karkhana nazar opposite car parking stand makkah tower FAISALABAD</li>
+              <li><span className="font-medium text-slate-200">Address:</span> Outside Karkhana nazar opposite car parking stand FAISALABAD</li>
             </ul>
           </div>
         </div>
